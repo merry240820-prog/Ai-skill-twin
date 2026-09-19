@@ -1,0 +1,1487 @@
+<title>토익스피킹 30일 트레이너</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{
+  --paper:#F4F6F4;
+  --surface:#FFFFFF;
+  --surface-2:#E9EEEA;
+  --ink:#15211C;
+  --ink-2:#4A5A52;
+  --ink-3:#7D8C84;
+  --line:#D8E0DA;
+  --line-2:#C3CEC6;
+  --accent:#0B6B53;
+  --accent-2:#0E8266;
+  --accent-soft:#DDEEE6;
+  --on-accent:#FFFFFF;
+  --gold:#946713;
+  --gold-soft:#F5EAD1;
+  --rec:#C42B23;
+  --rec-soft:#FAE3E1;
+  --shadow:0 1px 2px rgba(21,33,28,.06), 0 8px 24px -14px rgba(21,33,28,.28);
+  --r-s:8px; --r-m:12px; --r-l:18px;
+  --f-display:'Gabarito','Noto Sans KR',system-ui,sans-serif;
+  --f-body:'Noto Sans KR',system-ui,-apple-system,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1513;
+    --surface:#17201C;
+    --surface-2:#202B26;
+    --ink:#E9F0EB;
+    --ink-2:#A8BAB0;
+    --ink-3:#78897F;
+    --line:#2A3832;
+    --line-2:#3A4A43;
+    --accent:#4FC49F;
+    --accent-2:#69D6B3;
+    --accent-soft:#17342B;
+    --on-accent:#06130F;
+    --gold:#DCB35C;
+    --gold-soft:#332A14;
+    --rec:#F0796D;
+    --rec-soft:#3A1D1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1513;
+  --surface:#17201C;
+  --surface-2:#202B26;
+  --ink:#E9F0EB;
+  --ink-2:#A8BAB0;
+  --ink-3:#78897F;
+  --line:#2A3832;
+  --line-2:#3A4A43;
+  --accent:#4FC49F;
+  --accent-2:#69D6B3;
+  --accent-soft:#17342B;
+  --on-accent:#06130F;
+  --gold:#DCB35C;
+  --gold-soft:#332A14;
+  --rec:#F0796D;
+  --rec-soft:#3A1D1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--f-body); font-size:15px; line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+h1,h2,h3,h4{font-family:var(--f-display); margin:0; text-wrap:balance; letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit; color:inherit; cursor:pointer}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important; transition-duration:.01ms !important}}
+
+/* ---------- shell ---------- */
+.app{display:flex; flex-direction:column; height:100%; max-width:560px; margin:0 auto; background:var(--paper)}
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+  display:flex; align-items:center; gap:12px;
+  padding:10px 16px; background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--line);
+}
+.topbar .mark{
+  width:30px; height:30px; flex:none; border-radius:9px; background:var(--accent);
+  color:var(--on-accent); display:grid; place-items:center;
+  font-family:var(--f-display); font-weight:700; font-size:13px;
+}
+.topbar h1{font-size:15px; font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.streak{
+  font-family:var(--f-mono); font-size:12px; font-weight:600; color:var(--gold);
+  background:var(--gold-soft); padding:3px 9px; border-radius:99px; white-space:nowrap;
+}
+.iconbtn{background:none; border:1px solid var(--line); border-radius:9px; width:32px; height:32px; display:grid; place-items:center; flex:none; color:var(--ink-2)}
+
+main{flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch}
+.wrap{padding:16px 16px 28px; display:flex; flex-direction:column; gap:16px}
+
+.tabbar{
+  position:sticky; bottom:0; z-index:20; display:grid; grid-template-columns:repeat(5,1fr);
+  background:color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+}
+.tabbar button{
+  background:none; border:0; padding:5px 2px; display:flex; flex-direction:column; align-items:center; gap:3px;
+  color:var(--ink-3); font-size:10.5px; font-weight:500; border-radius:10px;
+}
+.tabbar button[aria-current="true"]{color:var(--accent)}
+.tabbar svg{width:21px; height:21px; stroke-width:1.7}
+
+/* ---------- primitives ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l); padding:16px}
+.card.flat{border-radius:var(--r-m); padding:14px}
+.eyebrow{font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3)}
+.muted{color:var(--ink-2); font-size:13.5px}
+.tiny{color:var(--ink-3); font-size:12px}
+.mono{font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+.row{display:flex; align-items:center; gap:10px}
+.row.wrap-r{flex-wrap:wrap}
+.spread{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.stack{display:flex; flex-direction:column; gap:10px}
+.sec-h{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:-4px}
+.sec-h h2{font-size:17px; font-weight:600}
+
+.btn{
+  border:1px solid var(--line-2); background:var(--surface); color:var(--ink);
+  border-radius:10px; padding:9px 14px; font-size:13.5px; font-weight:500; line-height:1.2;
+}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
+.btn.ghost{border-color:transparent; background:var(--surface-2); color:var(--ink-2)}
+.btn.rec{background:var(--rec); border-color:var(--rec); color:#fff; font-weight:600}
+.btn.sm{padding:6px 10px; font-size:12.5px; border-radius:8px}
+.btn.full{width:100%; text-align:center; padding:12px}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+
+.chipbar{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none}
+.chipbar::-webkit-scrollbar{display:none}
+.chip{
+  flex:none; border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+  border-radius:99px; padding:6px 13px; font-size:12.5px; font-weight:500; white-space:nowrap;
+}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
+.seg{display:flex; background:var(--surface-2); border-radius:11px; padding:3px; gap:3px}
+.seg button{flex:1; border:0; background:none; border-radius:9px; padding:8px 4px; font-size:13px; font-weight:500; color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface); color:var(--ink); font-weight:600; box-shadow:var(--shadow)}
+
+.pill{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px; background:var(--surface-2); color:var(--ink-2); white-space:nowrap}
+.pill.accent{background:var(--accent-soft); color:var(--accent)}
+.pill.gold{background:var(--gold-soft); color:var(--gold)}
+.pill.rec{background:var(--rec-soft); color:var(--rec)}
+
+.bar{height:7px; border-radius:99px; background:var(--surface-2); overflow:hidden}
+.bar > i{display:block; height:100%; border-radius:99px; background:var(--accent); transition:width .35s ease}
+.bar.gold > i{background:var(--gold)}
+
+input,textarea,select{
+  font:inherit; width:100%; background:var(--surface); color:var(--ink);
+  border:1px solid var(--line-2); border-radius:10px; padding:10px 12px;
+}
+textarea{resize:vertical; min-height:70px; line-height:1.55}
+label.fld{display:flex; flex-direction:column; gap:5px; font-size:12px; font-weight:600; color:var(--ink-2)}
+
+/* ---------- dashboard ---------- */
+.hero{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l);
+  padding:18px 16px; box-shadow:var(--shadow);
+}
+.hero .dayno{font-family:var(--f-mono); font-size:34px; font-weight:600; line-height:1; color:var(--accent); font-variant-numeric:tabular-nums}
+.tiles{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+.tile{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-m); padding:12px 13px}
+.tile b{display:block; font-family:var(--f-mono); font-size:22px; font-weight:600; line-height:1.15; font-variant-numeric:tabular-nums}
+.tile span{font-size:11.5px; color:var(--ink-3); font-weight:500}
+
+/* ---------- checklist ---------- */
+.task{display:flex; gap:11px; align-items:flex-start; padding:11px 0; border-top:1px solid var(--line)}
+.task:first-of-type{border-top:0}
+.task input[type=checkbox]{
+  appearance:none; width:21px; height:21px; flex:none; margin:1px 0 0; padding:0;
+  border:1.7px solid var(--line-2); border-radius:7px; background:var(--surface); position:relative;
+}
+.task input[type=checkbox]:checked{background:var(--accent); border-color:var(--accent)}
+.task input[type=checkbox]:checked::after{
+  content:""; position:absolute; left:6.5px; top:2.5px; width:5px; height:10px;
+  border:solid var(--on-accent); border-width:0 2.2px 2.2px 0; transform:rotate(43deg);
+}
+.task .tx{flex:1; min-width:0; font-size:14px; line-height:1.5}
+.task input:checked + .tx{color:var(--ink-3); text-decoration:line-through}
+.task .min{font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3); flex:none; padding-top:2px}
+
+.daycard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-m); overflow:hidden}
+.daycard > summary{
+  list-style:none; cursor:pointer; padding:13px 14px; display:flex; align-items:center; gap:11px;
+}
+.daycard > summary::-webkit-details-marker{display:none}
+.daycard .dnum{
+  font-family:var(--f-mono); font-size:12px; font-weight:600; width:38px; flex:none;
+  color:var(--ink-3); letter-spacing:-.02em;
+}
+.daycard .dttl{flex:1; min-width:0; font-size:13.5px; font-weight:500; line-height:1.4}
+.daycard .dprog{font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3); flex:none}
+.daycard[data-done="1"] .dnum{color:var(--accent)}
+.daycard[data-today="1"]{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+.daycard .body{padding:0 14px 14px; border-top:1px solid var(--line); margin-top:2px}
+
+/* ---------- memo bank ---------- */
+.tmpl{
+  background:var(--surface-2); border-radius:var(--r-m); padding:12px 13px;
+  font-size:13.5px; line-height:1.7; border-left:3px solid var(--accent);
+}
+.tmpl .sl{color:var(--gold); font-weight:600}
+.exline{display:flex; gap:10px; padding:9px 0; border-top:1px solid var(--line); align-items:flex-start}
+.exline:first-child{border-top:0}
+.exline .en{font-weight:500; font-size:13.5px; flex:1; min-width:0}
+.exline .ko{font-size:12.5px; color:var(--ink-2); flex:1; min-width:0}
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r-m)}
+table{border-collapse:collapse; width:100%; font-size:12.5px; min-width:340px}
+th,td{padding:8px 10px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+th{background:var(--surface-2); font-weight:600; font-size:11.5px; color:var(--ink-2); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+
+/* ---------- flashcard ---------- */
+.fcard{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l);
+  padding:26px 18px; min-height:190px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:12px; text-align:center; box-shadow:var(--shadow);
+}
+.fcard .front{font-family:var(--f-display); font-size:24px; font-weight:600; line-height:1.3}
+.fcard .back{font-size:16px; font-weight:500}
+.fcard .ex{font-size:13px; color:var(--ink-2); line-height:1.6; max-width:34em}
+
+/* ---------- recorder ---------- */
+.timer{
+  font-family:var(--f-mono); font-size:52px; font-weight:600; line-height:1;
+  font-variant-numeric:tabular-nums; letter-spacing:-.03em;
+}
+.phase-prep{color:var(--gold)}
+.phase-ans{color:var(--rec)}
+.phase-idle{color:var(--ink-3)}
+.ringwrap{display:grid; place-items:center; gap:10px; padding:6px 0}
+.reclist .rec-it{display:flex; gap:10px; align-items:center; padding:11px 0; border-top:1px solid var(--line)}
+.reclist .rec-it:first-child{border-top:0}
+.score-row{display:flex; gap:6px; align-items:center}
+.score-row .sbtn{width:28px; height:28px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface); font-family:var(--f-mono); font-size:12px; display:grid; place-items:center}
+.score-row .sbtn[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
+audio{width:100%; height:34px}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* ---------- notes ---------- */
+.note{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-m); padding:13px 14px; display:flex; flex-direction:column; gap:8px}
+.note .q{font-size:13.5px; font-weight:500; line-height:1.5}
+.note .mine{font-size:13px; color:var(--rec); background:var(--rec-soft); border-radius:8px; padding:8px 10px; line-height:1.55}
+.note .fix{font-size:13px; color:var(--accent); background:var(--accent-soft); border-radius:8px; padding:8px 10px; line-height:1.55}
+.empty{text-align:center; padding:30px 16px; color:var(--ink-3); font-size:13.5px; line-height:1.7}
+
+dialog{
+  border:0; padding:0; background:transparent; max-width:520px; width:calc(100% - 24px);
+  color:var(--ink);
+}
+dialog::backdrop{background:rgba(10,18,15,.55); backdrop-filter:blur(2px)}
+dialog .sheet{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-l); padding:18px; display:flex; flex-direction:column; gap:12px; max-height:82vh; overflow-y:auto}
+.toast{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(76px + env(safe-area-inset-bottom,0px));
+  background:var(--ink); color:var(--paper); padding:9px 16px; border-radius:99px; font-size:13px; font-weight:500;
+  z-index:60; box-shadow:var(--shadow); max-width:calc(100% - 32px); text-align:center;
+}
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="mark">TS</div>
+    <h1>토익스피킹 30일 트레이너</h1>
+    <span class="streak mono" id="streakPill">0일 연속</span>
+    <button class="iconbtn" id="settingsBtn" aria-label="설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="17" height="17" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <main id="main"><div class="wrap" id="view"></div></main>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="home" aria-current="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>홈</button>
+    <button data-tab="plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="m8.5 14.5 2 2 4-4"/></svg>플랜</button>
+    <button data-tab="bank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4.5h6a3 3 0 0 1 3 3V21a2.4 2.4 0 0 0-2.4-2.4H4z"/><path d="M20 4.5h-6a3 3 0 0 0-3 3V21a2.4 2.4 0 0 1 2.4-2.4H20z"/></svg>암기집</button>
+    <button data-tab="notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3.5h10l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20z"/><path d="M14.5 3.5V8H19"/><path d="M8.5 13h7M8.5 17h5"/></svg>노트</button>
+    <button data-tab="rec">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3.5"/></svg>녹음</button>
+  </nav>
+</div>
+
+<dialog id="sheet"><div class="sheet" id="sheetBody"></div></dialog>
+
+<script>
+/* =========================================================
+   토익스피킹 30일 트레이너 — 데이터
+   시험 구성: 11문항 / 약 20분 / 0~200점 / Level 1~8
+   ========================================================= */
+
+const PLAN = [
+ {d:1,w:1,t:'진단 테스트 & 시험 구조',goal:'내 현재 위치와 시험의 시간 규칙을 몸에 새긴다',tasks:[['11문항 구성과 준비/답변 시간표 외우기',10],['[녹음] 진단 테스트: Q1~Q11 전체 1회전',25],['녹음 다시 듣고 약점 3가지를 오답노트에 기록',10]]},
+ {d:2,w:1,t:'Q1-2 읽기의 기본',goal:'끊어읽기와 강세 규칙을 적용해 본다',tasks:[['암기집 Q1-2 채점 포인트·끊어읽기 규칙 정독',10],['내용어 강세 + 연음 10세트 소리내어 연습',15],['[녹음] 지문 2개 × 2회, 두 번째가 나아졌는지 비교',15]]},
+ {d:3,w:1,t:'Q1-2 숫자와 고유명사',goal:'숫자에서 멈추지 않는다',tasks:[['날짜·시간·전화번호·금액·퍼센트 읽는 법 암기',12],['단어장 「Q1-2 읽기」 카드 1회전',10],['[녹음] 지문 2개, 숫자 정확도만 자가채점',15]]},
+ {d:4,w:1,t:'Q3-4 사진 묘사 뼈대',goal:'6단계 템플릿을 안 보고 말한다',tasks:[['암기집 Q3-4 템플릿 통암기(도입→인원→중심→주변→배경→마무리)',15],['위치 전치사 15개를 각각 한 문장으로',10],['[녹음] 장면 카드 2개',15]]},
+ {d:5,w:1,t:'Q3-4 중심인물 묘사',goal:'현재진행형이 자동으로 나오게 한다',tasks:[['동작·복장 표현 20개 소리내어 암기',12],['「is/are + -ing」 문장 5개 즉석으로 만들기',10],['[녹음] 장면 카드 2개 — 30초를 끝까지 채우기',15]]},
+ {d:6,w:1,t:'Q3-4 배경과 마무리',goal:'남는 시간을 배경 묘사로 채운다',tasks:[['배경·분위기 표현 + 마무리 문장 3종 암기',12],['단어장 「Q3-4 사진 묘사」 카드 1회전',12],['[녹음] 장면 카드 3개 연속(쉬지 않고)',18]]},
+ {d:7,w:1,t:'1주차 점검',goal:'Q1~Q4를 실전 속도로 통과한다',tasks:[['[녹음] Q1~Q4 미니 모의',15],['자가채점 후 오답노트 정리',15],['이번 주 틀린 표현 10개 복습',10]]},
+
+ {d:8,w:2,t:'Q5-7 구조 이해',goal:'준비 3초에 당황하지 않는다',tasks:[['암기집 Q5-7 정독 + 15초/30초 길이 감각 잡기',12],['질문 유형 5가지(빈도·선호·경험·제안·비교) 분류 연습',12],['[녹음] Q5-7 세트 1개',10]]},
+ {d:9,w:2,t:'Q5-6 짧은 답 15초',goal:'15초를 2~3문장으로 정확히 채운다',tasks:[['15초 분량 체감 훈련(문장 수 세기)',10],['시간 벌기 표현 8개 암기',10],['[녹음] Q5-7 세트 2개',16]]},
+ {d:10,w:2,t:'Q7 30초 채우기',goal:'이유 2개 + 예시 구조를 자동화한다',tasks:[['「이유1 + 예시 + 이유2 + 마무리」 구조 연습',15],['만능 이유 4종 암기',10],['[녹음] Q7 유형만 4문항',15]]},
+ {d:11,w:2,t:'Q8-10 자료 읽기',goal:'45초 안에 표의 뼈대를 파악한다',tasks:[['암기집 Q8-10 정독 + 자료 유형 3가지 구분',12],['45초 훑기 순서(제목→열→시간순→특이항목) 훈련',12],['[녹음] Q8-10 세트 1개',12]]},
+ {d:12,w:2,t:'Q8-10 시간·장소 문장화',goal:'표의 한 줄을 완전한 문장으로 바꾼다',tasks:[['일정 안내 표현 15개 암기',12],['표 1개를 골라 모든 행을 문장으로 말하기',15],['[녹음] Q8-10 세트 1개',12]]},
+ {d:13,w:2,t:'Q10 요약형 답변',goal:'조건에 맞는 항목만 골라 30초로 정리한다',tasks:[['조건에 맞는 항목 2~3개 고르는 훈련',15],['Q10 템플릿 통암기',10],['[녹음] Q10 유형만 3문항',15]]},
+ {d:14,w:2,t:'2주차 점검',goal:'Q5~Q10을 실전 속도로 통과한다',tasks:[['[녹음] Q5~Q10 미니 모의',18],['자가채점 + 오답노트 정리',15],['단어장 누적 복습(오늘 복습할 카드 전량)',12]]},
+
+ {d:15,w:3,t:'Q11 구조 잡기',goal:'45초 준비 안에 입장과 이유 2개를 정한다',tasks:[['암기집 Q11 템플릿 암기',15],['찬성/반대 빠르게 정하는 훈련(주제 10개)',10],['[녹음] Q11 주제 2개',15]]},
+ {d:16,w:3,t:'Q11 이유 만들기',goal:'어떤 주제에도 붙는 이유를 확보한다',tasks:[['만능 이유 은행 6개로 확장',15],['내 경험 예시 3개를 영어 문장으로 미리 준비',15],['[녹음] Q11 주제 2개',15]]},
+ {d:17,w:3,t:'Q11 60초 채우기',goal:'침묵 없이 60초를 끝낸다',tasks:[['60초 ≈ 8~10문장 — 문장 수로 계산하기',10],['늘리는 기술 3가지(예시·대조·부연) 연습',12],['[녹음] Q11 주제 3개',18]]},
+ {d:18,w:3,t:'유창성 집중',goal:'더듬는 지점을 없앤다',tasks:[['연결어 15개 자동화(소리내어 반복)',12],['같은 답변을 3회 반복 녹음하며 속도 개선',18],['더듬은 지점을 오답노트에 기록',10]]},
+ {d:19,w:3,t:'발음 집중',goal:'점수를 깎는 발음 습관을 고친다',tasks:[['한국인 빈출 오류음 8개 교정 연습',15],['문장 강세·억양 셰도잉',15],['[녹음] Q1-2 지문 2개 재점검',12]]},
+ {d:20,w:3,t:'문법 집중',goal:'말할 때 나오는 문법 실수를 줄인다',tasks:[['3인칭 단수·시제·관사·복수 자가 체크리스트 점검',12],['오답노트 「문법」 태그 항목 전량 재작성',18],['[녹음] 재작성한 답변을 말로 확인',12]]},
+ {d:21,w:3,t:'3주차 점검 — 전체 모의',goal:'11문항 완주 감각을 만든다',tasks:[['[녹음] 전체 11문항 모의 1회',25],['자가채점 + 남은 약점 2개 선정',15]]},
+
+ {d:22,w:4,t:'약점 파트 집중 ①',goal:'가장 낮은 파트를 끌어올린다',tasks:[['선정한 약점 파트 암기집 재정독',12],['해당 파트 단어장 전량 복습',15],['[녹음] 약점 파트 4문항',18]]},
+ {d:23,w:4,t:'약점 파트 집중 ②',goal:'틀렸던 답을 고친 버전으로 덮어쓴다',tasks:[['오답노트 미해결 항목 전량 재도전',20],['[녹음] 고친 답변을 녹음해 이전 것과 비교',18]]},
+ {d:24,w:4,t:'실전 모의 ①',goal:'시간 규칙을 어기지 않고 완주한다',tasks:[['[녹음] 전체 11문항',25],['자가채점 + 점수 기록',12]]},
+ {d:25,w:4,t:'템플릿 자동화',goal:'템플릿을 보지 않고 꺼낸다',tasks:[['파트별 템플릿 안 보고 써보기',18],['막히는 템플릿만 10회 반복 낭독',15]]},
+ {d:26,w:4,t:'실전 모의 ②',goal:'모의 ①보다 나아졌는지 확인한다',tasks:[['[녹음] 전체 11문항',25],['모의 ①과 비교해 개선점 기록',12]]},
+ {d:27,w:4,t:'단어·표현 총정리',goal:'미암기 카드를 0으로 만든다',tasks:[['단어장 미암기 카드 전량 학습',20],['오답노트 「어휘」 태그 복습',12]]},
+ {d:28,w:4,t:'실전 모의 ③',goal:'실전과 같은 조건으로 마지막 점검',tasks:[['[녹음] 전체 11문항',25],['자가채점 + 남은 약점 1개만 선정',12]]},
+ {d:29,w:4,t:'마지막 보완',goal:'약점 하나만 집중해서 끝낸다',tasks:[['남은 약점 집중 훈련',20],['시험장 루틴 점검(마이크 테스트·목소리 크기·시간 배분)',10],['파트별 템플릿 최종 낭독',12]]},
+ {d:30,w:4,t:'시험 전날 컨디션 만들기',goal:'새로 배우지 않고, 있는 것을 확인한다',tasks:[['파트별 템플릿 1회씩 낭독',15],['[녹음] Q3 · Q7 · Q11 각 1문항 워밍업',12],['시험 당일 체크리스트 확인 후 일찍 자기',8]]}
+];
+
+const WEEKS = [
+ {w:1,t:'1주차 · 읽기와 묘사',s:'Q1-2 지문 읽기, Q3-4 사진 묘사의 뼈대를 세운다'},
+ {w:2,t:'2주차 · 응답과 정보',s:'Q5-7 즉답, Q8-10 자료 활용을 훈련한다'},
+ {w:3,t:'3주차 · 의견과 다듬기',s:'Q11 60초를 완성하고 발음·문법·유창성을 정리한다'},
+ {w:4,t:'4주차 · 실전 반복',s:'모의고사 3회로 약점을 좁혀 끝낸다'}
+];
+
+/* ---------- 파트별 핵심 암기집 ---------- */
+const BANK = [
+{id:'q12', tag:'Q1-2', title:'지문 읽기 (Read a text aloud)',
+ meta:['준비 45초','답변 45초','문항당 0~3점'],
+ grade:'채점 항목: 발음(pronunciation) · 억양과 강세(intonation & stress)',
+ points:[
+  '끊어읽기는 ① 긴 주어 뒤 ② 콤마 ③ and / but / or 앞 ④ 전치사구 앞에서.',
+  '내용어(명사·동사·형용사·부사)는 크고 길게, 기능어(관사·전치사·be동사)는 약하게.',
+  '나열은 A(↗), B(↗), and C(↘). Yes/No 의문문은 끝을 올리고, Wh-의문문은 내린다.',
+  '준비 45초 동안 숫자·고유명사·모르는 단어에 미리 표시해 둔다.',
+  '틀려도 되돌아가지 않는다. 멈추면 유창성 점수가 더 깎인다.',
+  '마이크에서 너무 멀지 않게, 평소보다 한 톤 크게.'
+ ],
+ tmpl:[{h:'빈출 지문 5종', lines:[
+   '광고 — "Are you looking for ~? / Don\'t miss ~ / For more information, visit ~"',
+   '안내방송 — "Attention, passengers. / Our next stop is ~ / Please note that ~"',
+   '자동응답 — "Thank you for calling ~. / Our business hours are ~ / Please stay on the line."',
+   '뉴스·일기예보 — "Good morning. This is ~ reporting for ~. / Temperatures will reach ~"',
+   '인물 소개 — "It\'s my pleasure to introduce ~ / He has worked as ~ for over ten years."'
+ ]},
+ {h:'숫자 읽는 법 — 여기서 제일 많이 무너진다', lines:[
+   '2025 → twenty twenty-five   |   1990 → nineteen ninety',
+   '$1,250 → one thousand two hundred fifty dollars',
+   '3:45 p.m. → three forty-five p.m.   |   7:00 → seven o\'clock',
+   'Oct. 5 → October fifth   |   May 21 → May twenty-first',
+   '555-0147 → five five five, oh one four seven',
+   '40% → forty percent   |   Route 9 → route nine   |   #3 → number three'
+ ]}],
+ exprs:[
+  ['Thank you for calling','전화 주셔서 감사합니다'],['Attention, shoppers','고객 여러분께 안내드립니다'],
+  ['We\'re pleased to announce','알려드리게 되어 기쁩니다'],['Please note that','~임을 유의해 주십시오'],
+  ['For more information, visit','자세한 내용은 ~를 방문하세요'],['Our business hours are','영업시간은 ~입니다'],
+  ['on behalf of','~을 대표하여'],['be sure to','반드시 ~하세요'],
+  ['located at / on','~에 위치한'],['proudly presents','자랑스럽게 선보입니다'],
+  ['reporting for','~에서 전해드립니다'],['stay on the line','끊지 말고 기다리세요'],
+  ['don\'t miss','놓치지 마세요'],['is scheduled to','~할 예정이다'],['a wide selection of','다양한 ~']
+ ],
+ traps:['모르는 단어가 나와도 자신 있게 읽고 지나간다 — 멈춤이 더 큰 감점.','문장 끝을 흐리지 않는다. 마침표에서 확실히 내린다.','평소보다 약간 느리게. 빠른 속도는 발음 점수를 깎는다.']
+},
+
+{id:'q34', tag:'Q3-4', title:'사진 묘사 (Describe a picture)',
+ meta:['준비 45초','답변 30초','문항당 0~3점'],
+ grade:'채점 항목: 발음 · 억양과 강세 · 문법 · 어휘 · 일관성',
+ points:[
+  '30초 ≈ 5~6문장. 중간에 끊기면 감점, 끝까지 채우는 게 우선.',
+  '전부 현재진행형(is/are + -ing)으로 통일하면 문법 실수가 줄어든다.',
+  '확실하지 않은 것은 단정하지 말고 "It seems like ~", "I think ~"로 감싼다.',
+  '사람 → 사물 → 배경 순서. 중심에서 바깥으로 나간다.',
+  '남는 시간은 배경 묘사나 전체 인상으로 채운다.'
+ ],
+ tmpl:[{h:'6단계 템플릿 — 이것만 외우면 어떤 사진이든 30초', lines:[
+   '① 장소: "This picture was taken at [an office / a park / a restaurant]."',
+   '② 인원: "There are about [three] people in this picture."',
+   '③ 중심: "In the middle of the picture, a man is [wearing a blue shirt and typing on a laptop]."',
+   '④ 주변: "On the left side, a woman is [talking to someone] , and on the right, two people are [standing in line]."',
+   '⑤ 배경: "In the background, I can see [some tall buildings and a few trees]."',
+   '⑥ 마무리: "Overall, it looks like a [busy weekday afternoon]."'
+ ]},
+ {h:'위치 표현', lines:[
+   'in the middle of / in the center of — 가운데',
+   'on the left side / on the right side — 왼쪽 / 오른쪽',
+   'in the foreground / in the background — 앞쪽 / 배경에',
+   'next to / beside — 옆에   |   across from — 맞은편에',
+   'behind / in front of — 뒤에 / 앞에   |   between A and B — 사이에',
+   'on top of / under — 위에 / 아래에   |   along the wall — 벽을 따라'
+ ]}],
+ exprs:[
+  ['is standing in line','줄을 서 있다'],['is sitting at a table','테이블에 앉아 있다'],
+  ['is holding a cup','컵을 들고 있다'],['is looking at a screen','화면을 보고 있다'],
+  ['is talking to each other','서로 이야기하고 있다'],['is wearing a jacket','재킷을 입고 있다'],
+  ['is pushing a cart','카트를 밀고 있다'],['is carrying a bag','가방을 들고 있다'],
+  ['is typing on a laptop','노트북을 치고 있다'],['is pointing at','~을 가리키고 있다'],
+  ['is crossing the street','길을 건너고 있다'],['is waiting for','~을 기다리고 있다'],
+  ['is handing something to','~에게 무언가를 건네고 있다'],['is taking notes','메모하고 있다'],
+  ['It seems like','~인 것 같다'],['Overall, it looks like','전체적으로 ~처럼 보인다'],
+  ['crowded / empty','붐비는 / 비어 있는'],['casual clothes','평상복']
+ ],
+ traps:['"There is 3 people" 같은 수 일치 실수 주의 — There are.','과거형으로 새지 않기. 사진은 현재진행형.','한 사람만 3문장 쓰지 말고 골고루 분배.']
+},
+
+{id:'q57', tag:'Q5-7', title:'듣고 질문에 답하기 (Respond to questions)',
+ meta:['준비 3초','Q5·Q6 답변 15초','Q7 답변 30초','문항당 0~3점'],
+ grade:'상황: 전화 설문조사 또는 지인과의 대화. 답의 내용보다 즉각성과 완결성이 중요하다.',
+ points:[
+  '준비가 3초뿐이다. 질문의 단어를 되받아 말하며 시작하면 생각할 시간을 번다.',
+  '단답 금지. "Yes."가 아니라 "Yes, I do. I usually ~"처럼 반드시 문장으로.',
+  'Q5·Q6는 2~3문장, Q7은 이유 2개 + 예시로 30초를 채운다.',
+  '사실일 필요 없다. 말하기 쉬운 쪽으로 지어내도 감점 없다.',
+  '질문을 못 들었어도 들린 단어로 아무 말이나 이어간다. 침묵이 최악.'
+ ],
+ tmpl:[{h:'Q5·Q6 (15초) — 2~3문장', lines:[
+   '"Well, I usually [go there about twice a month]. Actually, I went last weekend with my family. It\'s pretty close to my place."'
+ ]},
+ {h:'Q7 (30초) — 이유 2개 구조', lines:[
+   '"I think [내 입장]. There are two reasons.',
+   'First, [이유 1]. For example, [내 경험 한 문장].',
+   'Second, [이유 2].',
+   'That\'s why I [입장 반복]."'
+ ]},
+ {h:'만능 이유 4종 — 어떤 질문에도 붙는다', lines:[
+   'it saves a lot of time — 시간을 아낄 수 있다',
+   'it\'s much more convenient — 훨씬 편하다',
+   'it\'s cheaper than other options — 더 저렴하다',
+   'I can do it anytime, anywhere — 언제 어디서나 가능하다'
+ ]}],
+ exprs:[
+  ['Well, let me see.','음, 어디 보자.'],['That\'s a good question.','좋은 질문이네요.'],
+  ['To be honest,','솔직히 말하면,'],['Actually,','사실은,'],
+  ['I\'d say that','~라고 하겠어요'],['In my case,','제 경우에는,'],
+  ['about twice a month','한 달에 두 번쯤'],['once in a while','가끔'],
+  ['most of the time','대부분'],['I usually prefer A to B','보통 B보다 A를 선호한다'],
+  ['That\'s why','그래서 ~이다'],['The main reason is that','가장 큰 이유는 ~이다'],
+  ['It depends on','~에 따라 다르다'],['I\'m not really into','~을 별로 좋아하지 않는다'],
+  ['I\'d definitely recommend','꼭 추천하고 싶다']
+ ],
+ traps:['"Yes."/"No."로 끝내면 점수가 안 나온다.','15초를 5초 만에 끝내지 말 것 — 문장을 더 붙인다.','질문을 그대로 반복만 하고 끝내지 않기.']
+},
+
+{id:'q810', tag:'Q8-10', title:'제공된 정보를 사용하여 답하기',
+ meta:['자료 읽기 45초','각 문항 준비 3초','Q8·Q9 15초','Q10 30초','문항당 0~3점'],
+ grade:'자료 유형: 일정표(schedule) · 행사 안내(itinerary) · 이력서(résumé)',
+ points:[
+  '45초 읽기 순서: ① 제목·날짜·장소 ② 열 이름 ③ 시간 순서 ④ 취소·변경 같은 특이 항목.',
+  '표의 단어를 그대로 읽지 말고 완전한 문장으로 바꿔 말한다.',
+  'Q9는 상대가 틀린 정보를 말하는 경우가 많다 → 정정 표현을 준비한다.',
+  'Q10은 조건에 맞는 항목 2~3개만 골라 요약한다. 전부 읽지 않는다.',
+  '시간·이름·장소는 절대 틀리면 안 된다. 나머지는 유창하게.'
+ ],
+ tmpl:[{h:'Q8 — 시간·장소 확인 (15초)', lines:[
+   '"Sure. The [workshop] will be held on [Monday, March 3rd] at the [Main Conference Room]. It runs from [9 a.m.] to [4 p.m.]."'
+ ]},
+ {h:'Q9 — 정정하기 (15초)', lines:[
+   '"Actually, I\'m afraid that\'s not correct. According to the schedule, [정확한 정보]. So [부연 한 문장]."'
+ ]},
+ {h:'Q10 — 조건에 맞는 항목 요약 (30초)', lines:[
+   '"Sure, let me tell you about [조건: the sessions in the morning]. There are two.',
+   'First, [항목 1: 시간 + 제목 + 진행자 + 장소].',
+   'After that, [항목 2: 시간 + 제목 + 진행자 + 장소].',
+   'I hope that helps."'
+ ]}],
+ exprs:[
+  ['According to the schedule,','일정표에 따르면,'],['Let me check for you.','확인해 드릴게요.'],
+  ['It\'s scheduled for','~로 예정되어 있습니다'],['will be held on','~에 열립니다'],
+  ['will take place in Room 201','201호에서 진행됩니다'],['runs from 9 to 10:30','9시부터 10시 30분까지입니다'],
+  ['will be led by','~가 진행합니다'],['right after that','바로 그 다음에'],
+  ['I\'m afraid that\'s not correct.','죄송하지만 그건 맞지 않습니다.'],['There\'s been a change.','변경이 있었습니다'],
+  ['has been canceled','취소되었습니다'],['lasts about an hour','약 한 시간 걸립니다'],
+  ['in the morning / in the afternoon','오전에 / 오후에'],['the first session of the day','그날의 첫 세션'],
+  ['I hope that helps.','도움이 되었길 바랍니다.']
+ ],
+ traps:['표를 소리내어 읽는 수준이면 문법 점수가 안 나온다 — 문장으로.','Q10에서 항목을 4개 이상 말하려다 시간이 끊긴다. 2~3개면 충분.','"nine to four" 대신 "from nine a.m. to four p.m."처럼 완결하게.']
+},
+
+{id:'q11', tag:'Q11', title:'의견 제시 (Express an opinion)',
+ meta:['준비 45초','답변 60초','0~5점 — 배점이 가장 크다'],
+ grade:'채점 항목: 발음 · 억양 · 문법 · 어휘 · 일관성 · 내용의 완결성',
+ points:[
+  '60초 ≈ 8~10문장. 45초 준비 동안 입장 + 이유 2개 + 예시 1개를 확정한다.',
+  '입장은 말하기 쉬운 쪽으로. 진심일 필요 없다.',
+  '중간에 입장을 바꾸지 않는다 — 일관성 점수가 크게 깎인다.',
+  '시간이 남으면 결론을 다른 말로 한 번 더 반복한다.',
+  '"Um..."이 길어지면 감점. 연결어로 이어가며 계속 말한다.'
+ ],
+ tmpl:[{h:'60초 완성 템플릿', lines:[
+   '① 입장: "I [agree / disagree] that [주제를 그대로 반복]."',
+   '② 예고: "I have two reasons for this."',
+   '③ 이유 1: "First of all, [이유]. For instance, [구체 예시 한두 문장]."',
+   '④ 이유 2: "Second, [이유]. In my case, [내 경험 한두 문장]."',
+   '⑤ 마무리: "For these reasons, I [입장 반복]."'
+ ]},
+ {h:'답변을 늘리는 3가지 기술', lines:[
+   '예시 — "For example, when I was in college, I ~"',
+   '대조 — "On the other hand, if you don\'t ~, you might ~"',
+   '부연 — "This means that ~ / As a result, ~"'
+ ]},
+ {h:'만능 이유 은행 6종', lines:[
+   'saves time and money — 시간과 돈을 아낀다',
+   'is more efficient / productive — 더 효율적이다',
+   'reduces stress — 스트레스를 줄인다',
+   'gives people more flexibility — 유연성을 준다',
+   'helps build relationships — 관계 형성에 도움이 된다',
+   'gives real-world experience — 실제 경험을 준다'
+ ]}],
+ exprs:[
+  ['I strongly agree that','~에 강하게 동의한다'],['I\'d have to disagree with','~에 동의하지 않는다'],
+  ['I have two reasons for this.','이유가 두 가지 있다.'],['First of all,','우선,'],
+  ['Second, / On top of that,','둘째로, / 게다가,'],['For instance,','예를 들어,'],
+  ['In my case,','제 경우에는,'],['On the other hand,','반면에,'],
+  ['As a result,','그 결과,'],['This means that','이는 ~을 의미한다'],
+  ['That\'s the main reason why','그것이 ~인 가장 큰 이유다'],['For these reasons,','이러한 이유로,'],
+  ['in the long run','장기적으로'],['from my point of view','제 관점에서는'],
+  ['a huge difference','큰 차이']
+ ],
+ traps:['45초 준비를 멍하니 보내지 말고 이유 2개를 반드시 정한다.','30초에 끝내면 큰 감점. 예시로 늘린다.','어려운 단어보다 정확한 쉬운 문장이 점수가 높다.']
+}
+];
+
+const EXAM_FACTS = [
+ ['문항 수','11문항'],['시험 시간','약 20분'],['점수','0~200점 (Level 1~8)'],
+ ['Q1-2','지문 읽기 · 준비 45초 / 답변 45초'],
+ ['Q3-4','사진 묘사 · 준비 45초 / 답변 30초'],
+ ['Q5-7','듣고 답하기 · 준비 3초 / 15초·15초·30초'],
+ ['Q8-10','자료 활용 · 자료 45초 / 15초·15초·30초'],
+ ['Q11','의견 제시 · 준비 45초 / 답변 60초']
+];
+
+/* ---------- 단어 · 표현 카드 (간격 반복) ---------- */
+const VG = ['Q1-2 읽기','Q3-4 묘사','Q5-7 응답','Q8-10 정보','Q11 의견','연결어·유창성'];
+const VOCAB_RAW = [
+// --- Q1-2 읽기 ---
+[0,'attention, passengers','승객 여러분께 알립니다','Attention, passengers. Our next stop is City Hall.'],
+[0,'on behalf of','~을 대표하여','On behalf of our staff, thank you for joining us.'],
+[0,'we are pleased to announce','알려드리게 되어 기쁩니다','We are pleased to announce our new branch downtown.'],
+[0,'please note that','~임을 유의하십시오','Please note that the office closes at six.'],
+[0,'business hours','영업시간','Our business hours are nine to five, Monday through Friday.'],
+[0,'stay on the line','끊지 말고 기다리다','Please stay on the line and an agent will assist you.'],
+[0,'for more information','자세한 정보는','For more information, visit our website.'],
+[0,'a wide selection of','다양한 종류의','We offer a wide selection of office supplies.'],
+[0,'be sure to','반드시 ~하다','Be sure to bring your ticket to the entrance.'],
+[0,'proudly presents','자랑스럽게 선보이다','The city library proudly presents a summer reading festival.'],
+[0,'reporting for','~에서 전해드립니다','This is Karen Lee, reporting for Channel Seven News.'],
+[0,'is scheduled to','~할 예정이다','The train is scheduled to arrive at three fifteen.'],
+[0,'located on the corner of','~ 모퉁이에 위치한','Our store is located on the corner of Main and Fifth.'],
+[0,'don\'t miss','놓치지 마세요','Don\'t miss our biggest sale of the year.'],
+[0,'thank you for calling','전화 주셔서 감사합니다','Thank you for calling Riverside Dental Clinic.'],
+[0,'temperatures will reach','기온이 ~까지 오르겠습니다','Temperatures will reach thirty degrees this afternoon.'],
+[0,'it is my pleasure to introduce','소개하게 되어 기쁩니다','It is my pleasure to introduce our keynote speaker.'],
+[0,'valid through','~까지 유효한','This coupon is valid through October thirty-first.'],
+// --- Q3-4 묘사 ---
+[1,'in the middle of','가운데에','In the middle of the picture, a man is reading a newspaper.'],
+[1,'on the left side','왼쪽에','On the left side, a woman is holding a shopping bag.'],
+[1,'in the background','배경에','In the background, I can see several tall buildings.'],
+[1,'in the foreground','앞쪽에','In the foreground, there is a wooden bench.'],
+[1,'across from','맞은편에','A café is across from the bus stop.'],
+[1,'be standing in line','줄을 서 있다','Three people are standing in line at the counter.'],
+[1,'be sitting at a table','테이블에 앉아 있다','Two women are sitting at a table near the window.'],
+[1,'be holding','~을 들고 있다','A young man is holding a cup of coffee.'],
+[1,'be looking at','~을 보고 있다','She is looking at her phone.'],
+[1,'be talking to each other','서로 대화하고 있다','Two coworkers are talking to each other.'],
+[1,'be wearing','~을 입고 있다','He is wearing a dark blue suit and glasses.'],
+[1,'be pushing a cart','카트를 밀고 있다','A shopper is pushing a cart down the aisle.'],
+[1,'be carrying','~을 들고 가다','A woman is carrying a large box.'],
+[1,'be typing on a laptop','노트북을 치고 있다','A man is typing on a laptop at his desk.'],
+[1,'be pointing at','~을 가리키고 있다','The presenter is pointing at a chart on the screen.'],
+[1,'be crossing the street','길을 건너고 있다','Several people are crossing the street.'],
+[1,'be taking notes','메모하고 있다','A student is taking notes in a notebook.'],
+[1,'be handing something to','~에게 건네주고 있다','A clerk is handing a receipt to a customer.'],
+[1,'it seems like','~인 것 같다','It seems like they are having a meeting.'],
+[1,'overall, it looks like','전체적으로 ~처럼 보인다','Overall, it looks like a busy weekday morning.'],
+[1,'crowded','붐비는','The station looks quite crowded.'],
+[1,'be lined up along','~을 따라 늘어서 있다','Bicycles are lined up along the wall.'],
+[1,'casual clothes','평상복','Most of them are wearing casual clothes.'],
+[1,'be leaning against','~에 기대어 있다','A man is leaning against the railing.'],
+[1,'there are about','대략 ~이 있다','There are about five people in this picture.'],
+// --- Q5-7 응답 ---
+[2,'well, let me see','음, 어디 보자','Well, let me see. I go there about once a week.'],
+[2,'that\'s a good question','좋은 질문이네요','That\'s a good question. I\'d say about twice a month.'],
+[2,'to be honest','솔직히 말하면','To be honest, I don\'t watch TV very often.'],
+[2,'about twice a month','한 달에 두 번쯤','I visit my parents about twice a month.'],
+[2,'once in a while','가끔씩','I order delivery once in a while.'],
+[2,'most of the time','대부분의 경우','Most of the time, I take the subway to work.'],
+[2,'I usually prefer A to B','보통 B보다 A를 선호한다','I usually prefer coffee to tea in the morning.'],
+[2,'the main reason is that','가장 큰 이유는 ~이다','The main reason is that it saves me a lot of time.'],
+[2,'that\'s why','그래서 ~이다','That\'s why I always shop online.'],
+[2,'it depends on','~에 따라 다르다','It depends on how busy I am that week.'],
+[2,'I\'m not really into','~을 별로 안 좋아한다','I\'m not really into outdoor sports.'],
+[2,'I\'d definitely recommend','꼭 추천하고 싶다','I\'d definitely recommend the one near the station.'],
+[2,'it saves a lot of time','시간을 많이 아낀다','Driving saves a lot of time in the morning.'],
+[2,'it\'s much more convenient','훨씬 편하다','Shopping online is much more convenient for me.'],
+[2,'I can do it anytime, anywhere','언제 어디서나 할 수 있다','With an app, I can do it anytime, anywhere.'],
+[2,'in my case','제 경우에는','In my case, I usually study late at night.'],
+[2,'I\'d say that','~라고 하겠어요','I\'d say that price matters the most.'],
+[2,'a couple of times a year','일 년에 두어 번','I travel abroad a couple of times a year.'],
+[2,'it\'s pretty close to','~에서 꽤 가깝다','It\'s pretty close to my apartment.'],
+[2,'I\'ve been doing it for','~ 동안 해오고 있다','I\'ve been doing it for about three years.'],
+// --- Q8-10 정보 ---
+[3,'according to the schedule','일정표에 따르면','According to the schedule, the session starts at ten.'],
+[3,'let me check for you','확인해 드릴게요','Sure, let me check that for you.'],
+[3,'be scheduled for','~로 예정되어 있다','The workshop is scheduled for Tuesday afternoon.'],
+[3,'will be held on','~에 열릴 것이다','The conference will be held on May fifteenth.'],
+[3,'will take place in','~에서 열릴 것이다','The training will take place in Room 201.'],
+[3,'run from A to B','A부터 B까지 진행되다','The first session runs from nine to ten thirty.'],
+[3,'be led by','~가 진행하다','The seminar will be led by Dr. Amanda Cole.'],
+[3,'right after that','바로 그 다음에','Right after that, there is a thirty-minute break.'],
+[3,'I\'m afraid that\'s not correct','죄송하지만 맞지 않습니다','I\'m afraid that\'s not correct. It starts at eleven.'],
+[3,'there\'s been a change','변경이 있었습니다','There\'s been a change to the afternoon program.'],
+[3,'has been canceled','취소되었습니다','The Friday workshop has been canceled.'],
+[3,'last about an hour','약 한 시간 걸리다','Each session lasts about an hour.'],
+[3,'the first session of the day','그날의 첫 세션','The first session of the day is a welcome speech.'],
+[3,'I hope that helps','도움이 되었길 바랍니다','That\'s everything for the morning. I hope that helps.'],
+[3,'be open to all participants','모든 참가자에게 열려 있다','The evening reception is open to all participants.'],
+[3,'registration begins at','등록은 ~에 시작한다','Registration begins at eight thirty in the lobby.'],
+[3,'has over ten years of experience','10년 이상 경력이 있다','She has over ten years of experience in marketing.'],
+[3,'earned a degree in','~ 학위를 받았다','He earned a degree in economics from Boston University.'],
+[3,'served as','~로 근무했다','She served as a project manager for four years.'],
+[3,'be fully booked','예약이 다 찼다','The morning tour is fully booked.'],
+// --- Q11 의견 ---
+[4,'I strongly agree that','~에 강하게 동의한다','I strongly agree that remote work benefits employees.'],
+[4,'I\'d have to disagree with','~에 동의할 수 없다','I\'d have to disagree with that statement.'],
+[4,'I have two reasons for this','이유가 두 가지 있다','I have two reasons for this opinion.'],
+[4,'first of all','우선','First of all, it saves a lot of commuting time.'],
+[4,'on top of that','게다가','On top of that, it reduces daily stress.'],
+[4,'for instance','예를 들어','For instance, my cousin works from home twice a week.'],
+[4,'on the other hand','반면에','On the other hand, some people miss the office.'],
+[4,'as a result','그 결과','As a result, they finish more work each day.'],
+[4,'this means that','이는 ~을 의미한다','This means that companies can hire from anywhere.'],
+[4,'for these reasons','이러한 이유로','For these reasons, I believe it is a good policy.'],
+[4,'in the long run','장기적으로','In the long run, it saves the company money.'],
+[4,'from my point of view','제 관점에서는','From my point of view, experience matters more.'],
+[4,'make a huge difference','큰 차이를 만들다','A good manager can make a huge difference.'],
+[4,'be more efficient','더 효율적이다','Working in small teams is more efficient.'],
+[4,'reduce stress','스트레스를 줄이다','Flexible hours reduce stress for many workers.'],
+[4,'give people more flexibility','유연성을 준다','Online classes give people more flexibility.'],
+[4,'help build relationships','관계 형성에 도움이 되다','Team projects help build relationships at work.'],
+[4,'gain real-world experience','실무 경험을 쌓다','Interns gain real-world experience quickly.'],
+[4,'be worth the cost','비용을 들일 가치가 있다','I think the training is worth the cost.'],
+[4,'have a positive effect on','~에 긍정적 영향을 주다','Exercise has a positive effect on concentration.'],
+[4,'that\'s the main reason why','그것이 ~인 가장 큰 이유다','That\'s the main reason why I support it.'],
+[4,'I\'d rather A than B','B보다 A를 택하겠다','I\'d rather work in a small company than a large one.'],
+[4,'in terms of','~ 측면에서','In terms of cost, online courses are much better.'],
+[4,'play an important role in','~에서 중요한 역할을 하다','Feedback plays an important role in learning.'],
+[4,'not only A but also B','A뿐만 아니라 B도','It is not only cheaper but also faster.'],
+// --- 연결어 · 유창성 ---
+[5,'to begin with','우선','To begin with, I want to explain my situation.'],
+[5,'what I mean is','제 말은','What I mean is, the price is not the problem.'],
+[5,'in other words','다시 말해','In other words, it is a waste of time.'],
+[5,'actually','사실은','Actually, I changed my mind about that.'],
+[5,'however','하지만','However, there is one more thing to consider.'],
+[5,'besides that','그 외에도','Besides that, the location is very convenient.'],
+[5,'for example','예를 들어','For example, I used it during my last trip.'],
+[5,'that being said','그렇긴 하지만','That being said, I still prefer the old version.'],
+[5,'at the same time','동시에','At the same time, we need to think about cost.'],
+[5,'more importantly','더 중요한 것은','More importantly, it keeps everyone informed.'],
+[5,'to sum up','요약하자면','To sum up, I think it is the better choice.'],
+[5,'that\'s about it','그 정도입니다','That\'s about it for the morning schedule.'],
+[5,'let me put it this way','이렇게 말해볼게요','Let me put it this way — it simply works better.'],
+[5,'as I mentioned','말씀드린 대로','As I mentioned, the deadline is next Monday.'],
+[5,'overall','전반적으로','Overall, I had a good experience with it.']
+];
+const VOCAB = VOCAB_RAW.map((r,i)=>({id:'v'+i, g:r[0], en:r[1], ko:r[2], ex:r[3]}));
+
+/* ---------- 녹음 문제 은행 ---------- */
+const QBANK = {
+read:[
+ {id:'r1',label:'광고 — 카페',text:"Are you looking for a comfortable place to work outside the office? Bright Corner Café, located on the corner of Ninth Avenue and Park Street, offers free high-speed internet, quiet study rooms, and fresh coffee all day long. Stop by before eleven a.m. and receive twenty percent off any drink. For more information, visit our website at brightcorner dot com."},
+ {id:'r2',label:'안내방송 — 기차역',text:"Attention, passengers. The nine forty-five express train to Riverside will depart from platform three instead of platform one. Please make your way to platform three as soon as possible. Passengers with large luggage should use the elevator near the main entrance. We apologize for the inconvenience and thank you for your patience."},
+ {id:'r3',label:'자동응답 — 치과',text:"Thank you for calling Westlake Family Dental. Our office is open Monday through Friday, from eight thirty a.m. to six p.m., and on Saturdays from nine to one. If you would like to schedule an appointment, please press one. To speak with a member of our billing department, press two. Otherwise, please stay on the line and one of our staff will assist you shortly."},
+ {id:'r4',label:'인물 소개 — 시상식',text:"Good evening, and welcome to the annual Small Business Awards. It's my pleasure to introduce tonight's keynote speaker, Ms. Diane Palmer. Ms. Palmer earned a degree in economics from Boston University and has served as the director of the City Business Center for over twelve years. Please join me in giving her a warm welcome."},
+ {id:'r5',label:'뉴스 — 일기예보',text:"Good morning. This is Kevin Moss, reporting for Channel Four News. Heavy rain will continue throughout the region until Thursday evening, and temperatures will reach only sixteen degrees this afternoon. Drivers on Route Nine should expect delays of up to thirty minutes. We'll bring you another update at five o'clock."}
+],
+scene:[
+ {id:'s1',label:'사무실 회의실',scene:'긴 테이블에 네 사람이 앉아 있고, 한 남자가 일어서서 화면의 그래프를 가리키고 있다. 테이블 위에는 노트북과 종이컵이 놓여 있고, 창밖으로 높은 건물이 보인다.',hints:['a meeting room','is pointing at a chart','are sitting around a long table','in the background, tall buildings']},
+ {id:'s2',label:'카페 계산대',scene:'계산대 앞에 세 사람이 줄을 서 있고, 맨 앞의 여자가 지갑을 꺼내고 있다. 직원은 컵을 건네주고 있으며, 뒤쪽 벽에는 메뉴판이 걸려 있다.',hints:['are standing in line','is taking out her wallet','is handing a cup to','a menu board on the wall']},
+ {id:'s3',label:'공원 잔디밭',scene:'잔디밭 돗자리에 세 사람이 앉아 있다. 왼쪽에서는 한 남자가 개를 데리고 걷고 있고, 배경에는 나무와 자전거를 타는 사람이 보인다.',hints:['are sitting on a mat','is walking a dog','is riding a bicycle','on a sunny weekend']},
+ {id:'s4',label:'슈퍼마켓 통로',scene:'한 여자가 카트를 밀며 진열대의 물건을 보고 있다. 옆에서 직원이 상자를 정리하고 있고, 통로 양쪽으로 상품이 가득 쌓여 있다.',hints:['is pushing a cart','is looking at the shelves','is arranging boxes','products are stacked on both sides']},
+ {id:'s5',label:'공항 체크인',scene:'여러 사람이 수하물을 끌고 체크인 카운터 앞에 줄을 서 있다. 한 남자가 직원에게 여권을 건네고 있고, 위쪽에는 전광판이 보인다.',hints:['are waiting in line','is handing his passport to','pulling suitcases','a departure board above them']},
+ {id:'s6',label:'도서관 창가',scene:'큰 창가 책상에서 학생 두 명이 노트북과 책을 펼치고 공부하고 있다. 한 명은 필기 중이고, 뒤쪽 서가에서 한 사람이 책을 꺼내고 있다.',hints:['are studying at a desk','is taking notes','is pulling a book off the shelf','it looks quiet']}
+],
+qa:[
+ {id:'a1',label:'설문 — 커피숍',intro:"Imagine that a marketing firm is doing research in your area. You have agreed to participate in a telephone interview about coffee shops.",
+  qs:[{t:"How often do you visit coffee shops, and who do you usually go with?",ans:15},{t:"What do you usually order when you go to a coffee shop?",ans:15},{t:"If a new coffee shop opened in your neighborhood, what would make you visit it regularly? Why?",ans:30}]},
+ {id:'a2',label:'설문 — 운동',intro:"Imagine that a fitness magazine is doing a survey in your city. You have agreed to answer questions about exercise.",
+  qs:[{t:"When and where do you usually exercise?",ans:15},{t:"What kind of exercise do you enjoy the most, and why?",ans:15},{t:"Do you think gyms should stay open twenty-four hours a day? Why or why not?",ans:30}]},
+ {id:'a3',label:'설문 — 쇼핑',intro:"Imagine that a consumer research group is doing a study about shopping habits. You have agreed to participate in a phone interview.",
+  qs:[{t:"When was the last time you bought clothes, and where did you buy them?",ans:15},{t:"Do you prefer shopping online or in stores? Why?",ans:15},{t:"What is the most important factor when you choose where to shop? Explain with details.",ans:30}]},
+ {id:'a4',label:'설문 — 여행',intro:"Imagine that a travel company is doing research in your country. You have agreed to answer questions about travel.",
+  qs:[{t:"How often do you travel, and where do you usually go?",ans:15},{t:"Who do you usually travel with, and why?",ans:15},{t:"What is the biggest problem people face when they travel? Give some details.",ans:30}]}
+],
+info:[
+ {id:'i1',label:'워크숍 일정표',intro:"Leadership Workshop — Saturday, June 14 · Greenfield Training Center",
+  cols:['Time','Program','Leader','Room'],
+  rows:[['9:00–9:30','Registration and coffee','—','Main Lobby'],['9:30–10:30','Opening talk: Leading Small Teams','Dr. Susan Reed','Hall A'],['10:30–12:00','Workshop: Giving Feedback','Mark Chen','Room 201'],['12:00–1:00','Lunch','—','Cafeteria'],['1:00–2:30','Workshop: Managing Conflict','Dr. Susan Reed','Room 201'],['2:30–4:00','Group discussion','Mark Chen','Hall A'],['4:00–4:30','Closing remarks','Dr. Susan Reed','Hall A']],
+  qs:[{t:"Where is the workshop being held, and what time does it start?",ans:15},{t:"I heard the lunch break starts at eleven thirty. Is that right?",ans:15},{t:"Could you tell me about all the sessions led by Dr. Susan Reed?",ans:30}]},
+ {id:'i2',label:'출장 일정표',intro:"Business Trip Itinerary — Ms. Elena Vargas · Tuesday, March 4 · Chicago",
+  cols:['Time','Activity','Location'],
+  rows:[['7:10 a.m.','Flight departs','Gate 12, Terminal 2'],['9:40 a.m.','Arrive and pick up rental car','O\'Hare Airport'],['11:00 a.m.','Meeting with Northline Supply','Northline HQ, 4th floor'],['12:30 p.m.','Lunch with regional sales team','Harbor Grill'],['2:00 p.m.','Factory tour','Westside Plant'],['4:30 p.m.','Presentation to management — CANCELED','Northline HQ'],['7:00 p.m.','Return flight','Gate 8, Terminal 1']],
+  qs:[{t:"What time does my flight leave in the morning, and from which gate?",ans:15},{t:"I think I have a presentation at four thirty in the afternoon, right?",ans:15},{t:"I'd like to know everything scheduled at Northline headquarters. Could you give me the details?",ans:30}]},
+ {id:'i3',label:'이력서',intro:"Résumé — Daniel Oyelaran · Applicant for Marketing Manager",
+  cols:['Period','Position','Company / School'],
+  rows:[['2010–2014','B.A. in Communications','Riverton University'],['2014–2017','Marketing Assistant','Bluewave Media, Austin'],['2017–2021','Senior Marketing Specialist','Crestline Group, Dallas'],['2021–present','Marketing Team Leader','Nova Retail, Dallas'],['Skills','Social media campaigns · Data analysis · Fluent in Spanish','—']],
+  qs:[{t:"Where did the applicant go to school, and what did he study?",ans:15},{t:"I believe he is currently working in Austin. Is that correct?",ans:15},{t:"Could you tell me about all of his work experience in detail?",ans:30}]}
+],
+opinion:[
+ {id:'o1',label:'재택근무',text:"Do you agree or disagree with the following statement? Working from home is better for most employees than working in an office. Give reasons or examples to support your opinion."},
+ {id:'o2',label:'경력자 vs 신입',text:"Some people think companies should hire people with a lot of experience, while others think they should hire recent graduates. Which do you prefer, and why?"},
+ {id:'o3',label:'온라인 수업',text:"Do you agree or disagree with the following statement? Students learn more effectively from online classes than from classes in a classroom. Support your answer with reasons."},
+ {id:'o4',label:'좋은 관리자',text:"What is the most important quality for a good manager? Give reasons and specific examples to support your opinion."},
+ {id:'o5',label:'대도시 vs 소도시',text:"Do you agree or disagree with the following statement? It is better to live in a large city than in a small town. Give reasons or examples."},
+ {id:'o6',label:'자율 근무시간',text:"Some companies allow employees to choose their own working hours. Do you think this is a good idea? Why or why not?"},
+ {id:'o7',label:'SNS 광고',text:"Do you agree or disagree with the following statement? Advertising on social media is more effective than advertising on television. Support your opinion with reasons."},
+ {id:'o8',label:'대기업 vs 스타트업',text:"Which is better for a young person: working at a large, well-known company or at a small, new company? Explain your choice with details."}
+]};
+
+const PART_SPECS = {
+ read:{part:'Q1-2',prep:45,ans:45,label:'지문 읽기'},
+ scene:{part:'Q3-4',prep:45,ans:30,label:'사진(장면) 묘사'},
+ qa:{part:'Q5-7',prep:3,label:'듣고 답하기'},
+ info:{part:'Q8-10',prep:3,read:45,label:'자료 활용'},
+ opinion:{part:'Q11',prep:45,ans:60,label:'의견 제시'}
+};
+
+const SCORE_AXES = [['pron','발음'],['flu','유창성'],['gram','문법'],['cont','내용']];
+const NOTE_TAGS = ['문법','어휘','발음','시간초과','내용부족','템플릿'];
+
+/* =========================================================
+   상태 저장 — localStorage(진행/노트) + IndexedDB(녹음 오디오)
+   모든 데이터는 이 기기 안에만 저장됩니다.
+   ========================================================= */
+const LS_KEY='tsp30.v1';
+const BLANK={start:null,tasks:{},vocab:{},notes:[],log:{},theme:null,tab:'home'};
+let S=(function(){try{const r=localStorage.getItem(LS_KEY);if(r)return Object.assign({},BLANK,JSON.parse(r));}catch(e){}return JSON.parse(JSON.stringify(BLANK));})();
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){}}
+
+let RECS=[];               // {id,ts,part,label,q,dur,blob,scores,memo}
+let IDB_OK=true, _db=null;
+function idb(){return new Promise((res,rej)=>{if(_db)return res(_db);let rq;try{rq=indexedDB.open('tsp30',1);}catch(e){return rej(e);}
+ rq.onupgradeneeded=()=>{const d=rq.result;if(!d.objectStoreNames.contains('recs'))d.createObjectStore('recs',{keyPath:'id'});};
+ rq.onsuccess=()=>{_db=rq.result;res(_db);};rq.onerror=()=>rej(rq.error);});}
+async function idbAll(){try{const d=await idb();return await new Promise((res,rej)=>{const r=d.transaction('recs').objectStore('recs').getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}catch(e){IDB_OK=false;return[];}}
+async function idbPut(o){try{const d=await idb();return await new Promise((res,rej)=>{const t=d.transaction('recs','readwrite');t.objectStore('recs').put(o);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){IDB_OK=false;}}
+async function idbDel(id){try{const d=await idb();return await new Promise((res,rej)=>{const t=d.transaction('recs','readwrite');t.objectStore('recs').delete(id);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){IDB_OK=false;}}
+
+/* ---------- 유틸 ---------- */
+const $=s=>document.querySelector(s);
+const view=()=>$('#view');
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function todayKey(d){const t=d||new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function dayDiff(aKey,bKey){const a=new Date(aKey+'T00:00:00'),b=new Date(bKey+'T00:00:00');return Math.round((b-a)/86400000);}
+function addDays(k,n){const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return todayKey(d);}
+function mmss(sec){const m=Math.floor(sec/60),s=Math.floor(sec%60);return m+':'+String(s).padStart(2,'0');}
+let _toastT=null;
+function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);}t.textContent=msg;t.hidden=false;clearTimeout(_toastT);_toastT=setTimeout(()=>{t.hidden=true;},2200);}
+function sheet(html){const d=$('#sheet');$('#sheetBody').innerHTML=html;if(!d.open)d.showModal();}
+function closeSheet(){const d=$('#sheet');if(d.open)d.close();}
+
+/* ---------- 진행 통계 ---------- */
+const TOTAL_TASKS=PLAN.reduce((n,d)=>n+d.tasks.length,0);
+function taskKey(d,i){return 'd'+d+'-'+i;}
+function dayDone(d){const p=PLAN[d-1];return p.tasks.every((_,i)=>S.tasks[taskKey(d,i)]);}
+function dayCount(d){const p=PLAN[d-1];return p.tasks.filter((_,i)=>S.tasks[taskKey(d,i)]).length;}
+function doneTasks(){return Object.values(S.tasks).filter(Boolean).length;}
+function doneDays(){let n=0;for(let d=1;d<=30;d++)if(dayDone(d))n++;return n;}
+function currentDay(){
+  for(let d=1;d<=30;d++)if(!dayDone(d))return d;   // 아직 끝내지 않은 첫 Day
+  return 30;
+}
+function scheduledDay(){return S.start?Math.min(30,Math.max(1,dayDiff(S.start,todayKey())+1)):1;}
+function streak(){
+  let n=0,k=todayKey();
+  if(!S.log[k])k=addDays(k,-1);
+  while(S.log[k]){n++;k=addDays(k,-1);}
+  return n;
+}
+function markLog(){const k=todayKey();S.log[k]=(S.log[k]||0)+1;}
+function vocabState(id){return S.vocab[id]||{b:0,n:0,w:0};}
+function vocabDue(list){const now=Date.now();return (list||VOCAB).filter(v=>{const st=vocabState(v.id);return st.b===0||st.n<=now;});}
+function vocabLearned(){return VOCAB.filter(v=>vocabState(v.id).b>=3).length;}
+function openNotes(){return S.notes.filter(n=>!n.done).length;}
+function recSeconds(){return RECS.reduce((n,r)=>n+(r.dur||0),0);}
+
+/* =========================================================
+   라우팅
+   ========================================================= */
+const VIEWS={};
+let TAB=S.tab&&['home','plan','bank','notes','rec'].includes(S.tab)?S.tab:'home';
+function go(tab,opts){
+  if(RUN.active&&tab!=='rec'){if(!confirm('진행 중인 녹음 세션을 중단할까요?'))return;stopRun(true);}
+  TAB=tab;S.tab=tab;save();
+  document.querySelectorAll('#tabbar button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.tab===tab)));
+  render(opts);
+  $('#main').scrollTop=0;
+}
+function render(opts){
+  view().innerHTML=VIEWS[TAB](opts||{});
+  $('#streakPill').textContent=streak()+'일 연속';
+}
+
+/* =========================================================
+   홈
+   ========================================================= */
+VIEWS.home=function(){
+  const pct=Math.round(doneTasks()/TOTAL_TASKS*100);
+  const cd=currentDay(), p=PLAN[cd-1];
+  const sched=scheduledDay();
+  const due=vocabDue().length, on=openNotes();
+  const behind=S.start&&sched>cd?sched-cd:0;
+  let out='';
+
+  if(!S.start){
+    out+='<div class="hero stack">'+
+      '<span class="eyebrow">시작하기</span>'+
+      '<h2 style="font-size:21px">30일 플랜을 시작할까요?</h2>'+
+      '<p class="muted">오늘을 Day 1로 잡습니다. 하루 35~50분, 4주 뒤에 실전 모의 3회까지 끝나는 일정이에요. 시작일은 나중에 언제든 다시 맞출 수 있습니다.</p>'+
+      '<button class="btn primary full" data-act="startPlan">오늘부터 Day 1 시작</button>'+
+    '</div>';
+  }else{
+    out+='<div class="hero">'+
+      '<div class="spread" style="align-items:flex-start">'+
+        '<div><span class="eyebrow">오늘의 학습</span>'+
+          '<div class="row" style="gap:8px;align-items:baseline"><span class="dayno">'+cd+'</span><span class="muted" style="font-weight:600">/ 30일</span></div>'+
+          '<h2 style="font-size:17px;margin-top:4px">'+esc(p.t)+'</h2>'+
+          '<p class="muted" style="margin-top:3px">'+esc(p.goal)+'</p></div>'+
+        '<span class="pill '+(behind?'gold':'accent')+'">'+(behind?'일정보다 '+behind+'일 밀림':'일정대로')+'</span>'+
+      '</div>'+
+      '<div style="margin-top:14px">'+p.tasks.map((t,i)=>{
+        const k=taskKey(cd,i),ck=!!S.tasks[k];
+        return '<label class="task"><input type="checkbox" data-act="task" data-k="'+k+'"'+(ck?' checked':'')+'><span class="tx">'+esc(t[0])+'</span><span class="min mono">'+t[1]+'분</span></label>';
+      }).join('')+'</div>'+
+    '</div>';
+  }
+
+  out+='<div class="tiles">'+
+    tile(pct+'%','전체 진행률')+
+    tile(doneDays()+'일','완주한 Day')+
+    tile(String(RECS.length),'녹음 '+(recSeconds()?'· '+mmss(recSeconds()):''))+
+    tile(vocabLearned()+'/'+VOCAB.length,'암기한 표현')+
+  '</div>';
+
+  out+='<div class="card stack">'+
+    '<div class="spread"><span class="eyebrow">오늘 할 일</span></div>'+
+    row2('오늘 복습할 표현', due+'개', due?'notes:vocab':'', due?'복습 시작':'모두 완료')+
+    row2('미해결 오답노트', on+'개', on?'notes:wrong':'', on?'확인':'비어 있음')+
+    row2('실전 녹음 연습', '5개 파트', 'rec', '바로 가기')+
+  '</div>';
+
+  out+='<div class="sec-h"><h2>주차별 진행</h2><span class="tiny mono">'+doneTasks()+' / '+TOTAL_TASKS+' 과제</span></div>';
+  out+='<div class="stack">'+WEEKS.map(w=>{
+    const days=PLAN.filter(d=>d.w===w.w);
+    const tot=days.reduce((n,d)=>n+d.tasks.length,0);
+    const dn=days.reduce((n,d)=>n+dayCount(d.d),0);
+    const q=Math.round(dn/tot*100);
+    return '<div class="card flat stack" style="gap:8px">'+
+      '<div class="spread"><b style="font-size:14px;font-weight:600">'+esc(w.t)+'</b><span class="tiny mono">'+q+'%</span></div>'+
+      '<p class="tiny">'+esc(w.s)+'</p>'+
+      '<div class="bar"><i style="width:'+q+'%"></i></div></div>';
+  }).join('')+'</div>';
+
+  out+='<div class="card flat stack" style="gap:8px">'+
+    '<span class="eyebrow">시험 한눈에</span>'+
+    EXAM_FACTS.map(f=>'<div class="spread" style="gap:14px"><span class="tiny" style="flex:none;font-weight:600;color:var(--ink-2)">'+esc(f[0])+'</span><span class="tiny mono" style="text-align:right">'+esc(f[1])+'</span></div>').join('')+
+  '</div>';
+  return out;
+};
+function tile(b,s){return '<div class="tile"><b>'+esc(b)+'</b><span>'+esc(s)+'</span></div>';}
+function row2(label,val,dest,cta){
+  return '<div class="spread" style="border-top:1px solid var(--line);padding-top:10px">'+
+    '<div><div style="font-size:13.5px;font-weight:500">'+esc(label)+'</div><div class="tiny mono">'+esc(val)+'</div></div>'+
+    (dest?'<button class="btn sm" data-act="goto" data-dest="'+dest+'">'+esc(cta)+'</button>':'<span class="tiny">'+esc(cta)+'</span>')+'</div>';
+}
+
+/* =========================================================
+   30일 플랜
+   ========================================================= */
+VIEWS.plan=function(){
+  const cd=currentDay();
+  let out='<div class="sec-h"><h2>30일 플랜</h2><span class="tiny mono">'+doneDays()+'/30일 완주</span></div>';
+  if(!S.start){
+    out+='<div class="card stack"><p class="muted">아직 시작일이 없습니다. 오늘을 Day 1로 시작하면 진행률과 연속 학습일이 기록됩니다.</p><button class="btn primary full" data-act="startPlan">오늘부터 시작</button></div>';
+  }else{
+    out+='<div class="card flat spread"><div><div class="tiny">시작일</div><div class="mono" style="font-weight:600">'+S.start+'</div></div><button class="btn sm ghost" data-act="resetStart">시작일 변경</button></div>';
+  }
+  WEEKS.forEach(w=>{
+    out+='<div class="sec-h" style="margin-top:6px"><h2 style="font-size:15px">'+esc(w.t)+'</h2></div>';
+    out+='<div class="stack" style="gap:8px">';
+    PLAN.filter(d=>d.w===w.w).forEach(d=>{
+      const c=dayCount(d.d),n=d.tasks.length,done=c===n;
+      out+='<details class="daycard" data-done="'+(done?1:0)+'" data-today="'+(d.d===cd?1:0)+'"'+(d.d===cd?' open':'')+'>'+
+        '<summary><span class="dnum">DAY '+String(d.d).padStart(2,'0')+'</span>'+
+        '<span class="dttl">'+esc(d.t)+'</span>'+
+        '<span class="dprog mono">'+(done?'완료':c+'/'+n)+'</span></summary>'+
+        '<div class="body"><p class="tiny" style="padding:10px 0 2px">'+esc(d.goal)+'</p>'+
+        d.tasks.map((t,i)=>{const k=taskKey(d.d,i);
+          return '<label class="task"><input type="checkbox" data-act="task" data-k="'+k+'"'+(S.tasks[k]?' checked':'')+'><span class="tx">'+esc(t[0])+'</span><span class="min mono">'+t[1]+'분</span></label>';
+        }).join('')+
+        '<div class="row" style="margin-top:10px;gap:8px"><button class="btn sm ghost" data-act="dayAll" data-d="'+d.d+'">'+(done?'전체 해제':'전체 완료')+'</button>'+
+        '<span class="tiny mono">예상 '+d.tasks.reduce((n2,t)=>n2+t[1],0)+'분</span></div>'+
+      '</div></details>';
+    });
+    out+='</div>';
+  });
+  return out;
+};
+
+/* =========================================================
+   파트별 핵심 암기집
+   ========================================================= */
+let BANK_SEL='q12';
+VIEWS.bank=function(){
+  const b=BANK.find(x=>x.id===BANK_SEL)||BANK[0];
+  let out='<div class="sec-h"><h2>파트별 핵심 암기집</h2></div>';
+  out+='<div class="chipbar">'+BANK.map(x=>'<button class="chip" data-act="bankSel" data-id="'+x.id+'" aria-pressed="'+(x.id===b.id)+'">'+esc(x.tag)+'</button>').join('')+'</div>';
+
+  out+='<div class="card stack">'+
+    '<div><span class="eyebrow">'+esc(b.tag)+'</span><h2 style="font-size:18px;margin-top:2px">'+esc(b.title)+'</h2></div>'+
+    '<div class="row wrap-r" style="gap:6px">'+b.meta.map(m=>'<span class="pill mono">'+esc(m)+'</span>').join('')+'</div>'+
+    '<p class="muted">'+esc(b.grade)+'</p>'+
+  '</div>';
+
+  out+='<div class="card stack"><span class="eyebrow">채점을 좌우하는 것</span>'+
+    b.points.map((p,i)=>'<div class="row" style="align-items:flex-start;gap:9px"><span class="mono" style="color:var(--accent);font-size:12px;font-weight:600;padding-top:2px">'+String(i+1).padStart(2,'0')+'</span><span style="font-size:13.5px;line-height:1.55;flex:1">'+esc(p)+'</span></div>').join('')+
+  '</div>';
+
+  b.tmpl.forEach(t=>{
+    out+='<div class="card stack"><span class="eyebrow">'+esc(t.h)+'</span>'+
+      '<div class="tmpl">'+t.lines.map(l=>'<div>'+esc(l).replace(/\[([^\]]+)\]/g,'<span class="sl">[$1]</span>')+'</div>').join('')+'</div>'+
+      '<button class="btn sm ghost" data-act="copyTmpl" data-h="'+esc(t.h)+'" style="align-self:flex-start">템플릿 복사</button>'+
+    '</div>';
+  });
+
+  out+='<div class="card stack"><span class="eyebrow">필수 표현</span><div>'+
+    b.exprs.map(e=>'<div class="exline"><span class="en">'+esc(e[0])+'</span><span class="ko">'+esc(e[1])+'</span></div>').join('')+
+  '</div></div>';
+
+  out+='<div class="card stack" style="border-color:var(--rec)"><span class="eyebrow" style="color:var(--rec)">이것 때문에 깎인다</span>'+
+    b.traps.map(t=>'<div class="row" style="align-items:flex-start;gap:8px"><span style="color:var(--rec);font-weight:700">·</span><span style="font-size:13.5px;line-height:1.55;flex:1">'+esc(t)+'</span></div>').join('')+
+  '</div>';
+
+  out+='<button class="btn primary full" data-act="goto" data-dest="rec">'+esc(b.tag)+' 녹음 연습하러 가기</button>';
+  return out;
+};
+
+/* =========================================================
+   노트 — 단어·표현 카드 + 오답노트
+   ========================================================= */
+let NOTE_MODE='vocab', VG_SEL=-1, NF='all';
+const SRS=[0,1,2,4,7,14,30];
+const FC={q:[],i:0,flip:false,on:false};
+
+function vgList(){return VG_SEL<0?VOCAB:VOCAB.filter(v=>v.g===VG_SEL);}
+
+VIEWS.notes=function(){
+  let out='<div class="seg">'+
+    '<button data-act="noteMode" data-m="vocab" aria-pressed="'+(NOTE_MODE==='vocab')+'">단어 · 표현</button>'+
+    '<button data-act="noteMode" data-m="wrong" aria-pressed="'+(NOTE_MODE==='wrong')+'">오답노트</button></div>';
+  out+= NOTE_MODE==='vocab'?vocabView():wrongView();
+  return out;
+};
+
+function vocabView(){
+  const due=vocabDue(vgList());
+  let out='<div class="tiles">'+
+    tile(String(due.length),'지금 복습할 카드')+
+    tile(vocabLearned()+'/'+VOCAB.length,'암기 완료 (3회 이상)')+'</div>';
+
+  out+='<div class="chipbar">'+
+    '<button class="chip" data-act="vg" data-g="-1" aria-pressed="'+(VG_SEL<0)+'">전체</button>'+
+    VG.map((g,i)=>'<button class="chip" data-act="vg" data-g="'+i+'" aria-pressed="'+(VG_SEL===i)+'">'+esc(g)+'</button>').join('')+'</div>';
+
+  if(FC.on&&FC.q.length){
+    const v=FC.q[FC.i];
+    const st=vocabState(v.id);
+    out+='<div class="stack">'+
+      '<div class="spread"><span class="tiny mono">'+(FC.i+1)+' / '+FC.q.length+'</span><span class="pill">'+esc(VG[v.g])+'</span></div>'+
+      '<div class="bar"><i style="width:'+Math.round(FC.i/FC.q.length*100)+'%"></i></div>'+
+      '<button class="fcard" data-act="flip" style="width:100%;border-width:1px;text-align:center">'+
+        (FC.flip
+          ? '<div class="back">'+esc(v.ko)+'</div><div class="ex">'+esc(v.ex)+'</div><div class="tiny mono">'+esc(v.en)+'</div>'
+          : '<div class="front">'+esc(v.en)+'</div><div class="tiny">탭하면 뜻과 예문이 보입니다</div>')+
+      '</button>'+
+      (FC.flip
+        ? '<div class="row" style="gap:8px"><button class="btn full" data-act="fcNo" style="border-color:var(--rec);color:var(--rec)">다시 볼래요</button><button class="btn primary full" data-act="fcYes">외웠어요</button></div>'+
+          '<div class="row" style="gap:8px"><button class="btn sm ghost" data-act="fcToNote" style="flex:1">오답노트에 넣기</button><button class="btn sm ghost" data-act="fcEnd" style="flex:1">그만하기</button></div>'+
+          '<p class="tiny" style="text-align:center">암기 단계 '+st.b+'/6'+(st.w?' · '+st.w+'번 틀림':'')+'</p>'
+        : '<button class="btn ghost full" data-act="flip">뜻 보기</button>')+
+    '</div>';
+  }else{
+    out+='<div class="card stack">'+
+      '<p class="muted">'+(due.length
+        ? '지금 복습할 카드가 <b>'+due.length+'개</b> 있습니다. 「외웠어요」를 누를수록 다시 보는 간격이 1 → 2 → 4 → 7 → 14 → 30일로 늘어납니다.'
+        : '이 분류에서 지금 복습할 카드가 없습니다. 아래에서 전체 학습을 시작할 수 있어요.')+'</p>'+
+      '<div class="row" style="gap:8px">'+
+        (due.length?'<button class="btn primary full" data-act="fcStart" data-mode="due">복습 시작 ('+due.length+')</button>':'')+
+        '<button class="btn full" data-act="fcStart" data-mode="all">전체 학습 ('+vgList().length+')</button>'+
+      '</div></div>';
+  }
+
+  out+='<div class="sec-h" style="margin-top:4px"><h2 style="font-size:15px">카드 목록</h2><span class="tiny mono">'+vgList().length+'개</span></div>';
+  out+='<div class="card"><div>'+vgList().map(v=>{
+    const st=vocabState(v.id);
+    return '<div class="exline"><span class="en">'+esc(v.en)+'<div class="tiny" style="font-weight:400;margin-top:2px">'+esc(v.ex)+'</div></span>'+
+      '<span class="ko" style="flex:none;max-width:44%;text-align:right">'+esc(v.ko)+
+      '<div class="tiny mono" style="margin-top:2px;color:'+(st.b>=3?'var(--accent)':'var(--ink-3)')+'">'+(st.b?'단계 '+st.b:'미학습')+'</div></span></div>';
+  }).join('')+'</div></div>';
+  return out;
+}
+
+function wrongView(){
+  const all=S.notes.slice().sort((a,b)=>b.ts-a.ts);
+  const list=NF==='all'?all:NF==='open'?all.filter(n=>!n.done):all.filter(n=>n.part===NF||(n.tags||[]).includes(NF));
+  const solved=all.length-all.filter(n=>!n.done).length;
+  let out='<div class="tiles">'+tile(String(all.length),'전체 오답')+tile(all.length?Math.round(solved/all.length*100)+'%':'0%','해결률')+'</div>';
+  out+='<button class="btn primary full" data-act="noteNew">오답 추가하기</button>';
+  const parts=['Q1-2','Q3-4','Q5-7','Q8-10','Q11'];
+  out+='<div class="chipbar">'+
+    '<button class="chip" data-act="nf" data-f="all" aria-pressed="'+(NF==='all')+'">전체</button>'+
+    '<button class="chip" data-act="nf" data-f="open" aria-pressed="'+(NF==='open')+'">미해결</button>'+
+    parts.map(p=>'<button class="chip" data-act="nf" data-f="'+p+'" aria-pressed="'+(NF===p)+'">'+p+'</button>').join('')+
+    NOTE_TAGS.map(t=>'<button class="chip" data-act="nf" data-f="'+esc(t)+'" aria-pressed="'+(NF===t)+'">'+esc(t)+'</button>').join('')+'</div>';
+
+  if(!list.length){
+    out+='<div class="empty">아직 기록이 없습니다.<br>녹음을 듣다가 틀린 문장, 안 나온 표현, 시간이 모자랐던 지점을 바로 적어두세요.<br>「원인 태그」로 나중에 약점만 골라 볼 수 있습니다.</div>';
+    return out;
+  }
+  out+='<div class="stack">'+list.map(n=>'<div class="note">'+
+    '<div class="spread"><div class="row" style="gap:6px;flex-wrap:wrap">'+
+      '<span class="pill accent">'+esc(n.part||'기타')+'</span>'+
+      (n.tags||[]).map(t=>'<span class="pill gold">'+esc(t)+'</span>').join('')+
+      (n.done?'<span class="pill">해결</span>':'')+
+    '</div><span class="tiny mono">'+new Date(n.ts).toLocaleDateString('ko-KR')+'</span></div>'+
+    '<div class="q">'+esc(n.q)+'</div>'+
+    (n.mine?'<div class="mine"><b>내 답변</b><br>'+esc(n.mine)+'</div>':'')+
+    (n.fix?'<div class="fix"><b>고친 답변</b><br>'+esc(n.fix)+'</div>':'')+
+    '<div class="row" style="gap:6px"><button class="btn sm ghost" data-act="noteDone" data-id="'+n.id+'">'+(n.done?'미해결로':'해결 표시')+'</button>'+
+    '<button class="btn sm ghost" data-act="noteEdit" data-id="'+n.id+'">수정</button>'+
+    '<button class="btn sm ghost" data-act="noteDel" data-id="'+n.id+'" style="color:var(--rec)">삭제</button></div>'+
+  '</div>').join('')+'</div>';
+  return out;
+}
+
+function noteForm(n){
+  n=n||{id:'',part:'Q3-4',q:'',mine:'',fix:'',tags:[]};
+  return '<h3 style="font-size:17px">'+(n.id?'오답 수정':'오답 추가')+'</h3>'+
+   '<label class="fld">파트<select id="nfPart">'+['Q1-2','Q3-4','Q5-7','Q8-10','Q11','기타'].map(p=>'<option'+(p===n.part?' selected':'')+'>'+p+'</option>').join('')+'</select></label>'+
+   '<label class="fld">문제 / 상황<textarea id="nfQ" placeholder="예: Q3 사진 묘사 — 카페 장면에서 30초를 못 채움">'+esc(n.q)+'</textarea></label>'+
+   '<label class="fld">내가 말한 것<textarea id="nfMine" placeholder="예: There is three people... 하고 멈춤">'+esc(n.mine)+'</textarea></label>'+
+   '<label class="fld">고친 답변<textarea id="nfFix" placeholder="예: There are about three people in this picture.">'+esc(n.fix)+'</textarea></label>'+
+   '<div class="fld">원인 태그<div class="row wrap-r" style="gap:6px">'+NOTE_TAGS.map(t=>'<button type="button" class="chip" data-act="tagTog" data-t="'+esc(t)+'" aria-pressed="'+((n.tags||[]).includes(t))+'">'+esc(t)+'</button>').join('')+'</div></div>'+
+   '<div class="row" style="gap:8px"><button class="btn full" data-act="sheetClose">취소</button><button class="btn primary full" data-act="noteSave" data-id="'+esc(n.id)+'">저장</button></div>';
+}
+
+/* =========================================================
+   녹음 — 실전 타이머 + 자가채점
+   ========================================================= */
+let REC_SEL='read';
+const RUN={active:false,items:[],i:0,phase:'idle',left:0,t:null,stream:null,mr:null,chunks:[],title:'',noMic:false,startedAt:0,saved:[]};
+
+function tableHtml(o){
+  return '<div class="tblwrap"><table><thead><tr>'+o.cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+
+    o.rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+function buildItems(kind,id){
+  const sp=PART_SPECS[kind], src=QBANK[kind], it=[];
+  const pick=id?src.find(x=>x.id===id):src[Math.floor(Math.random()*src.length)];
+  if(!pick)return it;
+  if(kind==='read'){
+    it.push({part:sp.part,label:pick.label,prep:45,ans:45,
+      qhtml:'<div class="tmpl" style="border-left-color:var(--gold);font-size:15px;line-height:1.85">'+esc(pick.text)+'</div>'});
+  }else if(kind==='scene'){
+    it.push({part:sp.part,label:pick.label,prep:45,ans:30,
+      qhtml:'<div class="card flat stack" style="gap:8px"><span class="eyebrow">장면 카드 — 이 장면을 영어로 묘사하세요</span>'+
+        '<p style="font-size:14.5px;line-height:1.7">'+esc(pick.scene)+'</p>'+
+        '<div class="row wrap-r" style="gap:5px">'+pick.hints.map(h=>'<span class="pill">'+esc(h)+'</span>').join('')+'</div></div>'});
+  }else if(kind==='qa'){
+    pick.qs.forEach((q,n)=>it.push({part:sp.part,label:pick.label+' · Q'+(5+n),prep:3,ans:q.ans,
+      qhtml:'<p class="tiny" style="margin-bottom:8px">'+esc(pick.intro)+'</p>'+
+        '<div class="tmpl" style="font-size:16px">'+esc(q.t)+'</div>'}));
+  }else if(kind==='info'){
+    const tbl='<p class="tiny" style="margin-bottom:6px">'+esc(pick.intro)+'</p>'+tableHtml(pick);
+    pick.qs.forEach((q,n)=>it.push({part:sp.part,label:pick.label+' · Q'+(8+n),prep:3,ans:q.ans,
+      preSec:n===0?45:0,preHtml:tbl,
+      qhtml:tbl+'<div class="tmpl" style="font-size:16px;margin-top:10px">'+esc(q.t)+'</div>'}));
+  }else if(kind==='opinion'){
+    it.push({part:sp.part,label:pick.label,prep:45,ans:60,
+      qhtml:'<div class="tmpl" style="font-size:15.5px;line-height:1.8">'+esc(pick.text)+'</div>'});
+  }
+  return it;
+}
+function buildMock(){
+  const r=[...QBANK.read].sort(()=>Math.random()-.5).slice(0,2);
+  const s=[...QBANK.scene].sort(()=>Math.random()-.5).slice(0,2);
+  let it=[];
+  r.forEach(x=>it=it.concat(buildItems('read',x.id)));
+  s.forEach(x=>it=it.concat(buildItems('scene',x.id)));
+  it=it.concat(buildItems('qa'),buildItems('info'),buildItems('opinion'));
+  return it;
+}
+
+VIEWS.rec=function(){
+  if(RUN.active)return runView();
+  let out='<div class="sec-h"><h2>실전 녹음 연습</h2><span class="tiny mono">'+RECS.length+'개 · '+mmss(recSeconds())+'</span></div>';
+  out+='<div class="card stack" style="gap:10px">'+
+    '<span class="eyebrow">실전 모의고사</span>'+
+    '<p class="muted">Q1부터 Q11까지 실제 시간 규칙 그대로 한 번에 진행합니다. 약 20분 걸립니다.</p>'+
+    '<button class="btn primary full" data-act="runMock">11문항 모의고사 시작</button></div>';
+
+  out+='<div class="chipbar">'+Object.keys(PART_SPECS).map(k=>
+    '<button class="chip" data-act="recSel" data-k="'+k+'" aria-pressed="'+(REC_SEL===k)+'">'+PART_SPECS[k].part+'</button>').join('')+'</div>';
+
+  const sp=PART_SPECS[REC_SEL];
+  out+='<div class="card stack" style="gap:10px"><div class="spread"><b style="font-weight:600">'+esc(sp.part)+' · '+esc(sp.label)+'</b>'+
+    '<span class="pill mono">준비 '+sp.prep+'초</span></div>'+
+    '<div class="stack" style="gap:8px">'+QBANK[REC_SEL].map(x=>
+      '<div class="spread" style="border-top:1px solid var(--line);padding-top:9px">'+
+      '<span style="font-size:13.5px;flex:1;min-width:0">'+esc(x.label)+'</span>'+
+      '<button class="btn sm primary" data-act="runOne" data-k="'+REC_SEL+'" data-id="'+x.id+'">시작</button></div>').join('')+
+    '</div></div>';
+
+  out+='<div class="sec-h"><h2 style="font-size:16px">내 녹음</h2>'+(RECS.length?'<button class="btn sm ghost" data-act="recClear">전체 삭제</button>':'')+'</div>';
+  if(!IDB_OK)out+='<div class="card flat"><p class="tiny" style="color:var(--rec)">이 브라우저에서는 녹음 저장소를 열 수 없어 녹음이 이번 세션에서만 유지됩니다.</p></div>';
+  if(!RECS.length){
+    out+='<div class="empty">아직 녹음이 없습니다.<br>위에서 문제를 골라 한 문항만 해봐도 됩니다.<br>녹음은 이 기기에만 저장되고 어디에도 전송되지 않습니다.</div>';
+    return out;
+  }
+  out+='<div class="card reclist">'+RECS.slice().sort((a,b)=>b.ts-a.ts).map(r=>{
+    const sc=r.scores||{};
+    const avg=SCORE_AXES.map(a=>sc[a[0]]).filter(Boolean);
+    return '<div style="border-top:1px solid var(--line);padding:12px 0" data-rec="'+r.id+'">'+
+      '<div class="spread"><div style="min-width:0"><div class="row" style="gap:6px"><span class="pill accent">'+esc(r.part)+'</span>'+
+        (avg.length?'<span class="pill gold mono">평균 '+(avg.reduce((x,y)=>x+y,0)/avg.length).toFixed(1)+'</span>':'')+'</div>'+
+        '<div style="font-size:13.5px;font-weight:500;margin-top:4px">'+esc(r.label)+'</div>'+
+        '<div class="tiny mono">'+new Date(r.ts).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' · '+r.dur+'초</div></div>'+
+        '<button class="btn sm" data-act="recPlay" data-id="'+r.id+'">재생</button></div>'+
+      '<div data-player="'+r.id+'" style="margin-top:8px" hidden></div>'+
+      '<div class="stack" style="gap:7px;margin-top:10px">'+
+        SCORE_AXES.map(a=>'<div class="spread"><span class="tiny" style="width:44px;flex:none">'+esc(a[1])+'</span>'+
+          '<div class="score-row">'+[1,2,3,4,5].map(n=>'<button class="sbtn" data-act="score" data-id="'+r.id+'" data-ax="'+a[0]+'" data-n="'+n+'" aria-pressed="'+(sc[a[0]]===n)+'">'+n+'</button>').join('')+'</div></div>').join('')+
+      '</div>'+
+      '<div class="row" style="gap:6px;margin-top:9px"><button class="btn sm ghost" data-act="recToNote" data-id="'+r.id+'" style="flex:1">오답노트로</button>'+
+      '<button class="btn sm ghost" data-act="recDel" data-id="'+r.id+'" style="color:var(--rec)">삭제</button></div>'+
+    '</div>';
+  }).join('')+'</div>';
+  return out;
+};
+
+function runView(){
+  const it=RUN.items[RUN.i]||{};
+  const ph=RUN.phase;
+  const cls=ph==='ans'?'phase-ans':ph==='idle'||ph==='done'?'phase-idle':'phase-prep';
+  const lbl={pre:'자료 읽기',prep:'준비',ans:'● 답변 녹음 중',done:'완료'}[ph]||'';
+  let out='<div class="spread"><span class="pill accent">'+esc(it.part||RUN.title)+'</span>'+
+    '<span class="tiny mono">'+(RUN.i+1)+' / '+RUN.items.length+'</span></div>';
+  out+='<div class="bar"><i style="width:'+Math.round(RUN.i/RUN.items.length*100)+'%"></i></div>';
+
+  if(ph==='done'){
+    const n=RUN.saved.length;
+    out+='<div class="card stack" style="align-items:center;text-align:center">'+
+      '<h2 style="font-size:20px">세션 완료</h2>'+
+      '<p class="muted">'+RUN.items.length+'문항 중 '+n+'개를 녹음했습니다.<br>바로 다시 들으면서 자가채점을 해보세요.</p>'+
+      '<button class="btn primary full" data-act="runExit">녹음 목록으로</button></div>';
+    return out;
+  }
+
+  out+='<div class="card stack" style="align-items:center;gap:6px">'+
+    '<span class="eyebrow '+(ph==='ans'?'pulse':'')+'" style="color:'+(ph==='ans'?'var(--rec)':'var(--gold)')+'">'+esc(lbl)+(RUN.noMic&&ph==='ans'?' (마이크 없음 — 타이머만)':'')+'</span>'+
+    '<div class="timer '+cls+'" id="runTimer">'+mmss(RUN.left)+'</div>'+
+    '<div class="tiny">'+esc(it.label||'')+'</div></div>';
+
+  out+='<div>'+(ph==='pre'?(it.preHtml||''):(it.qhtml||''))+'</div>';
+
+  out+='<div class="row" style="gap:8px">'+
+    (ph==='ans'
+      ? '<button class="btn rec full" data-act="runStop">답변 끝내고 다음</button>'
+      : '<button class="btn primary full" data-act="runSkip">바로 시작</button>')+
+    '<button class="btn" data-act="runAbort">중단</button></div>';
+  out+='<p class="tiny" style="text-align:center">'+(ph==='prep'?'준비 시간이 끝나면 «삑» 소리와 함께 녹음이 시작됩니다.':ph==='ans'?'시간이 되면 자동으로 저장하고 다음 문항으로 넘어갑니다.':'자료를 읽는 시간입니다.')+'</p>';
+  return out;
+}
+
+/* ---------- 엔진 ---------- */
+let AC=null;
+function beep(freq,ms){
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);o.frequency.value=freq;o.type='sine';
+    g.gain.setValueAtTime(.0001,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.18,AC.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+ms/1000);
+    o.start();o.stop(AC.currentTime+ms/1000+.02);}catch(e){}
+}
+function pickMime(){
+  const c=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus',''];
+  for(const m of c){try{if(!m||MediaRecorder.isTypeSupported(m))return m;}catch(e){}}
+  return '';
+}
+async function startRun(items,title){
+  if(!items||!items.length)return;
+  RUN.items=items;RUN.i=0;RUN.title=title||'';RUN.saved=[];RUN.active=true;RUN.noMic=false;
+  try{
+    if(!navigator.mediaDevices||!window.MediaRecorder)throw new Error('unsupported');
+    RUN.stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    RUN.noMic=true;
+    if(!confirm('마이크를 사용할 수 없습니다.\n타이머만 켜고 연습을 계속할까요?')){RUN.active=false;render();return;}
+  }
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}
+  enterItem();
+}
+function enterItem(){
+  const it=RUN.items[RUN.i];
+  if(!it){finishRun();return;}
+  if(it.preSec){setPhase('pre',it.preSec);}else{setPhase('prep',it.prep);}
+  render();
+}
+function setPhase(p,sec){
+  RUN.phase=p;RUN.left=sec;
+  clearInterval(RUN.t);
+  RUN.t=setInterval(tick,1000);
+}
+function tick(){
+  RUN.left--;
+  const el=document.getElementById('runTimer');
+  if(el)el.textContent=mmss(Math.max(0,RUN.left));
+  if(RUN.left===3&&RUN.phase!=='ans')beep(760,90);
+  if(RUN.left<=0){
+    clearInterval(RUN.t);
+    if(RUN.phase==='pre'){setPhase('prep',RUN.items[RUN.i].prep);render();}
+    else if(RUN.phase==='prep'){beep(940,220);beginAnswer();}
+    else if(RUN.phase==='ans'){beep(520,260);endAnswer();}
+  }
+}
+function beginAnswer(){
+  const it=RUN.items[RUN.i];
+  RUN.chunks=[];
+  if(RUN.stream&&!RUN.noMic){
+    try{
+      const mt=pickMime();
+      RUN.mr=mt?new MediaRecorder(RUN.stream,{mimeType:mt}):new MediaRecorder(RUN.stream);
+      RUN.mr.ondataavailable=e=>{if(e.data&&e.data.size)RUN.chunks.push(e.data);};
+      RUN.mr.onstop=()=>persist(it);
+      RUN.mr.start();
+    }catch(e){RUN.noMic=true;}
+  }
+  RUN.startedAt=Date.now();
+  setPhase('ans',it.ans);
+  render();
+}
+function endAnswer(){
+  if(RUN.mr&&RUN.mr.state==='recording'){RUN.mr.stop();RUN.mr=null;}
+  else advance();
+}
+async function persist(it){
+  const dur=Math.max(1,Math.round((Date.now()-RUN.startedAt)/1000));
+  const blob=new Blob(RUN.chunks,{type:(RUN.chunks[0]&&RUN.chunks[0].type)||'audio/webm'});
+  const rec={id:'rc'+Date.now()+Math.floor(Math.random()*999),ts:Date.now(),part:it.part,label:it.label,dur:dur,blob:blob,scores:{},memo:''};
+  RECS.push(rec);RUN.saved.push(rec.id);
+  await idbPut(rec);
+  markLog();save();
+  advance();
+}
+function advance(){RUN.i++;if(RUN.i>=RUN.items.length)finishRun();else enterItem();}
+function finishRun(){clearInterval(RUN.t);try{if(RUN.stream)RUN.stream.getTracks().forEach(tr=>tr.stop());}catch(e){}RUN.stream=null;RUN.phase='done';render();}
+function stopRun(silent){
+  clearInterval(RUN.t);
+  try{if(RUN.mr&&RUN.mr.state==='recording'){RUN.mr.onstop=null;RUN.mr.stop();}}catch(e){}
+  RUN.mr=null;
+  try{if(RUN.stream)RUN.stream.getTracks().forEach(t=>t.stop());}catch(e){}
+  RUN.stream=null;RUN.active=false;RUN.phase='idle';
+  if(!silent)render();
+}
+
+/* =========================================================
+   플래시카드 로직
+   ========================================================= */
+function fcStart(mode){
+  const base=vgList();
+  const q=(mode==='due'?vocabDue(base):base.slice()).sort(()=>Math.random()-.5);
+  FC.q=q;FC.i=0;FC.flip=false;FC.on=q.length>0;
+  if(!q.length)toast('학습할 카드가 없습니다');
+  render();
+}
+function fcAnswer(ok){
+  const v=FC.q[FC.i];if(!v)return;
+  const st=Object.assign({b:0,n:0,w:0},S.vocab[v.id]);
+  if(ok){st.b=Math.min(6,st.b+1);st.n=Date.now()+SRS[st.b]*86400000;}
+  else{st.w++;st.b=0;st.n=Date.now();}
+  S.vocab[v.id]=st;markLog();save();
+  FC.i++;FC.flip=false;
+  if(FC.i>=FC.q.length){FC.on=false;toast('카드 '+FC.q.length+'개 학습 완료');}
+  render();
+}
+
+/* =========================================================
+   설정 · 백업
+   ========================================================= */
+function applyTheme(){
+  if(S.theme)document.documentElement.dataset.theme=S.theme;
+  else delete document.documentElement.dataset.theme;
+}
+function settingsSheet(){
+  const th=S.theme||'system';
+  sheet('<h3 style="font-size:17px">설정</h3>'+
+   '<div class="fld">화면 테마<div class="seg">'+
+     [['system','시스템'],['light','라이트'],['dark','다크']].map(t=>'<button data-act="theme" data-t="'+t[0]+'" aria-pressed="'+(th===t[0])+'">'+t[1]+'</button>').join('')+'</div></div>'+
+   '<div class="card flat stack" style="gap:6px"><span class="eyebrow">홈 화면에 추가</span>'+
+     '<p class="tiny">iPhone Safari: 공유 버튼 → «홈 화면에 추가».<br>Android Chrome: 우측 상단 ⋮ → «홈 화면에 추가».<br>추가하면 앱 아이콘으로 바로 열리고, 학습 기록은 그대로 유지됩니다.</p></div>'+
+   '<div class="card flat stack" style="gap:6px"><span class="eyebrow">데이터 저장 위치</span>'+
+     '<p class="tiny">진행·단어·오답노트는 이 브라우저에, 녹음 파일은 기기 내부 저장소에만 보관됩니다. 서버로 전송되지 않습니다. 브라우저 데이터를 지우면 함께 사라지니 가끔 백업하세요.</p></div>'+
+   '<div class="row" style="gap:8px"><button class="btn full" data-act="backup">백업 만들기</button><button class="btn full" data-act="restore">백업 복원</button></div>'+
+   '<button class="btn full" data-act="wipe" style="color:var(--rec);border-color:var(--rec)">모든 기록 초기화</button>'+
+   '<button class="btn ghost full" data-act="sheetClose">닫기</button>');
+}
+function backupSheet(){
+  const data=JSON.stringify({v:1,exportedAt:new Date().toISOString(),state:S},null,1);
+  sheet('<h3 style="font-size:17px">백업 만들기</h3>'+
+    '<p class="tiny">아래 내용을 통째로 복사해 메모앱이나 메일에 보관하세요. 녹음 오디오는 용량이 커서 포함되지 않습니다.</p>'+
+    '<textarea id="bkOut" readonly style="min-height:170px;font-family:var(--f-mono);font-size:11px">'+esc(data)+'</textarea>'+
+    '<div class="row" style="gap:8px"><button class="btn primary full" data-act="bkCopy">복사하기</button><button class="btn full" data-act="sheetClose">닫기</button></div>');
+}
+function restoreSheet(){
+  sheet('<h3 style="font-size:17px">백업 복원</h3>'+
+    '<p class="tiny">백업 내용을 붙여넣으면 현재 기록을 덮어씁니다.</p>'+
+    '<textarea id="rsIn" placeholder=\'{"v":1,...}\' style="min-height:170px;font-family:var(--f-mono);font-size:11px"></textarea>'+
+    '<div class="row" style="gap:8px"><button class="btn full" data-act="sheetClose">취소</button><button class="btn primary full" data-act="rsGo">복원하기</button></div>');
+}
+function copyText(t,msg){
+  const done=()=>toast(msg||'복사했습니다');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>fallback());}
+  else fallback();
+  function fallback(){
+    try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+    catch(e){toast('복사에 실패했습니다. 직접 선택해 주세요');}
+  }
+}
+
+/* =========================================================
+   이벤트
+   ========================================================= */
+let TAG_BUF=[];
+document.addEventListener('click',async function(e){
+  const t=e.target.closest('[data-act]');
+  if(!t)return;
+  const a=t.dataset.act;
+
+  if(a==='goto'){const d=t.dataset.dest.split(':');if(d[1])NOTE_MODE=d[1]==='vocab'?'vocab':'wrong';go(d[0]);return;}
+  if(a==='startPlan'){S.start=todayKey();markLog();save();render();toast('Day 1 시작. 오늘 할 일이 준비됐어요');return;}
+  if(a==='resetStart'){const v=prompt('시작일을 YYYY-MM-DD 로 입력하세요',S.start||todayKey());
+    if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){S.start=v;save();render();toast('시작일을 바꿨습니다');}return;}
+  if(a==='dayAll'){const d=+t.dataset.d,p=PLAN[d-1],all=dayDone(d);
+    p.tasks.forEach((_,i)=>{if(all)delete S.tasks[taskKey(d,i)];else S.tasks[taskKey(d,i)]=true;});
+    if(!all)markLog();save();render();return;}
+
+  if(a==='bankSel'){BANK_SEL=t.dataset.id;render();$('#main').scrollTop=0;return;}
+  if(a==='copyTmpl'){const b=BANK.find(x=>x.id===BANK_SEL);const g=b.tmpl.find(x=>x.h===t.dataset.h);
+    if(g)copyText(g.h+'\n'+g.lines.join('\n'),'템플릿을 복사했습니다');return;}
+
+  if(a==='noteMode'){NOTE_MODE=t.dataset.m;render();return;}
+  if(a==='vg'){VG_SEL=+t.dataset.g;FC.on=false;render();return;}
+  if(a==='fcStart'){fcStart(t.dataset.mode);return;}
+  if(a==='flip'){FC.flip=!FC.flip;render();return;}
+  if(a==='fcYes'){fcAnswer(true);return;}
+  if(a==='fcNo'){fcAnswer(false);return;}
+  if(a==='fcEnd'){FC.on=false;render();return;}
+  if(a==='fcToNote'){const v=FC.q[FC.i];TAG_BUF=['어휘'];
+    sheet(noteForm({id:'',part:'기타',q:'표현: '+v.en+' ('+v.ko+')',mine:'',fix:v.ex,tags:['어휘']}));return;}
+
+  if(a==='nf'){NF=t.dataset.f;render();return;}
+  if(a==='noteNew'){TAG_BUF=[];sheet(noteForm(null));return;}
+  if(a==='noteEdit'){const n=S.notes.find(x=>x.id===t.dataset.id);if(n){TAG_BUF=(n.tags||[]).slice();sheet(noteForm(n));}return;}
+  if(a==='tagTog'){const tag=t.dataset.t,on=t.getAttribute('aria-pressed')==='true';
+    t.setAttribute('aria-pressed',String(!on));
+    if(on)TAG_BUF=TAG_BUF.filter(x=>x!==tag);else if(!TAG_BUF.includes(tag))TAG_BUF.push(tag);return;}
+  if(a==='noteSave'){
+    const q=$('#nfQ').value.trim();
+    if(!q){toast('문제나 상황을 적어주세요');return;}
+    const id=t.dataset.id;
+    const body={part:$('#nfPart').value,q:q,mine:$('#nfMine').value.trim(),fix:$('#nfFix').value.trim(),tags:TAG_BUF.slice()};
+    if(id){const n=S.notes.find(x=>x.id===id);Object.assign(n,body);}
+    else S.notes.push(Object.assign({id:'n'+Date.now(),ts:Date.now(),done:false},body));
+    markLog();save();closeSheet();NOTE_MODE='wrong';render();toast('오답노트에 저장했습니다');return;}
+  if(a==='noteDone'){const n=S.notes.find(x=>x.id===t.dataset.id);n.done=!n.done;save();render();return;}
+  if(a==='noteDel'){if(confirm('이 오답 기록을 삭제할까요?')){S.notes=S.notes.filter(x=>x.id!==t.dataset.id);save();render();}return;}
+  if(a==='sheetClose'){closeSheet();return;}
+
+  if(a==='recSel'){REC_SEL=t.dataset.k;render();return;}
+  if(a==='runOne'){await startRun(buildItems(t.dataset.k,t.dataset.id),PART_SPECS[t.dataset.k].part);return;}
+  if(a==='runMock'){await startRun(buildMock(),'모의고사');return;}
+  if(a==='runSkip'){clearInterval(RUN.t);if(RUN.phase==='pre'){setPhase('prep',RUN.items[RUN.i].prep);render();}else{beep(940,200);beginAnswer();}return;}
+  if(a==='runStop'){clearInterval(RUN.t);beep(520,220);endAnswer();return;}
+  if(a==='runAbort'){if(confirm('세션을 중단할까요? 지금까지 저장된 녹음은 남습니다.'))stopRun();return;}
+  if(a==='runExit'){stopRun();return;}
+
+  if(a==='recPlay'){
+    const box=document.querySelector('[data-player="'+t.dataset.id+'"]');
+    const r=RECS.find(x=>x.id===t.dataset.id);
+    if(!box||!r)return;
+    if(!box.hidden){box.hidden=true;box.innerHTML='';t.textContent='재생';return;}
+    const au=document.createElement('audio');au.controls=true;au.src=URL.createObjectURL(r.blob);
+    box.innerHTML='';box.appendChild(au);box.hidden=false;t.textContent='닫기';au.play().catch(()=>{});return;}
+  if(a==='score'){
+    const r=RECS.find(x=>x.id===t.dataset.id);if(!r)return;
+    r.scores=r.scores||{};const ax=t.dataset.ax,n=+t.dataset.n;
+    r.scores[ax]=r.scores[ax]===n?0:n;
+    await idbPut(r);
+    document.querySelectorAll('[data-act="score"][data-id="'+r.id+'"][data-ax="'+ax+'"]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===r.scores[ax])));
+    return;}
+  if(a==='recToNote'){const r=RECS.find(x=>x.id===t.dataset.id);if(!r)return;
+    TAG_BUF=[];NOTE_MODE='wrong';
+    sheet(noteForm({id:'',part:r.part,q:r.label+' — 녹음 '+new Date(r.ts).toLocaleDateString('ko-KR'),mine:'',fix:'',tags:[]}));return;}
+  if(a==='recDel'){if(confirm('이 녹음을 삭제할까요?')){await idbDel(t.dataset.id);RECS=RECS.filter(x=>x.id!==t.dataset.id);render();}return;}
+  if(a==='recClear'){if(confirm('녹음을 모두 삭제할까요? 되돌릴 수 없습니다.')){for(const r of RECS)await idbDel(r.id);RECS=[];render();}return;}
+
+  if(a==='theme'){S.theme=t.dataset.t==='system'?null:t.dataset.t;save();applyTheme();settingsSheet();return;}
+  if(a==='backup'){backupSheet();return;}
+  if(a==='bkCopy'){copyText($('#bkOut').value,'백업 내용을 복사했습니다');return;}
+  if(a==='restore'){restoreSheet();return;}
+  if(a==='rsGo'){
+    try{const o=JSON.parse($('#rsIn').value);const st=o.state||o;
+      if(!st||typeof st!=='object')throw 0;
+      S=Object.assign({},BLANK,st);save();applyTheme();closeSheet();render();toast('복원했습니다');}
+    catch(err){toast('형식이 올바르지 않습니다');}
+    return;}
+  if(a==='wipe'){
+    if(!confirm('진행·단어·오답노트·녹음을 모두 지웁니다. 계속할까요?'))return;
+    for(const r of RECS)await idbDel(r.id);RECS=[];
+    S=JSON.parse(JSON.stringify(BLANK));save();applyTheme();closeSheet();render();toast('초기화했습니다');return;}
+});
+
+document.addEventListener('change',function(e){
+  const t=e.target.closest('[data-act="task"]');
+  if(!t)return;
+  if(t.checked){S.tasks[t.dataset.k]=true;markLog();}else delete S.tasks[t.dataset.k];
+  save();
+  $('#streakPill').textContent=streak()+'일 연속';
+  if(TAB==='home'){render();return;}            // 홈에서는 진행률 타일까지 함께 갱신
+  const card=t.closest('.daycard');
+  if(card){const d=+t.dataset.k.split('-')[0].slice(1);
+    const c=dayCount(d),n=PLAN[d-1].tasks.length;
+    card.dataset.done=c===n?1:0;
+    card.querySelector('.dprog').textContent=c===n?'완료':c+'/'+n;}
+});
+
+$('#tabbar').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(b.dataset.tab);});
+$('#settingsBtn').addEventListener('click',settingsSheet);
+$('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
+window.addEventListener('beforeunload',e=>{if(RUN.active){e.preventDefault();e.returnValue='';}});
+
+/* ---------- 시작 ---------- */
+applyTheme();
+document.querySelectorAll('#tabbar button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.tab===TAB)));
+render();
+idbAll().then(rs=>{RECS=rs||[];if(RECS.length)render();});
+</script>
