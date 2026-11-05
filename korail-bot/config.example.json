@@ -1,0 +1,15 @@
+{
+  "dep": "서울",
+  "arr": "부산",
+  "date": "20261120",
+  "time_from": "070000",
+  "time_to": "100000",
+  "train_type": "KTX",
+  "train_nos": [],
+  "seat": "GENERAL_FIRST",
+  "passengers": {"adult": 1, "child": 0, "senior": 0, "toddler": 0},
+  "try_waiting": false,
+  "interval": 5,
+  "max_attempts": 0,
+  "stop_at": "2026-11-20 06:30"
+}
