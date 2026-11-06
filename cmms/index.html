@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>설비관리시스템 CMMS</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#1d2433;--sub:#667085;--line:#e3e7ee;--pri:#2457c5;--ok:#1a8f5a;--warn:#c98a00;--bad:#c4372f}
+@media (prefers-color-scheme:dark){:root{--bg:#12151c;--card:#1b202a;--ink:#e6e9ef;--sub:#98a2b3;--line:#2c3340;--pri:#5b8cff}}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--pri);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0}nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer}
+nav button.on{background:#fff;color:var(--pri)}
+main{padding:16px;max-width:1200px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}.kpi b{font-size:26px;display:block}.kpi span{color:var(--sub);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--sub);font-weight:600}
+.tw{overflow-x:auto}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end}
+label{font-size:12px;color:var(--sub);display:flex;flex-direction:column;gap:4px}
+input,select,textarea{padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:60px}.full{grid-column:1/-1}
+.btn{background:var(--pri);color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer}.btn.s{padding:4px 8px;font-size:12px}.btn.g{background:var(--sub)}.btn.r{background:var(--bad)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;color:#fff}
+.t-요청{background:var(--bad)}.t-접수{background:var(--warn)}.t-작업중{background:var(--pri)}.t-완료{background:var(--ok)}
+.t-가동{background:var(--ok)}.t-고장{background:var(--bad)}.t-정비중{background:var(--warn)}.t-정지{background:var(--sub)}
+.low{color:var(--bad);font-weight:700}.bar{height:10px;background:var(--bad);border-radius:5px}
+h2{font-size:16px;margin:0 0 12px}.row{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+</style>
+</head>
+<body>
+<header><h1>🏭 설비관리시스템 (CMMS)</h1><nav id="nav"></nav></header>
+<main id="app"></main>
+<script>
+const TABS={dash:'대시보드',eq:'제조설비',req:'수리요청',wo:'수리작업',tech:'담당자',part:'예비품'};
+const KEY='cmms-v1';
+const today=()=>new Date().toISOString().slice(0,16);
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+let db=load();let tab='dash';
+function seed(){return{
+ eq:[{id:'E1',code:'CNC-01',name:'CNC 선반 1호기',line:'가공1라인',maker:'두산',installed:'2019-03-01',status:'가동'},
+     {id:'E2',code:'PRS-02',name:'프레스 200T',line:'프레스라인',maker:'현대',installed:'2017-06-15',status:'고장'},
+     {id:'E3',code:'ROB-03',name:'용접로봇',line:'용접라인',maker:'화낙',installed:'2021-01-10',status:'가동'}],
+ tech:[{id:'T1',name:'김정비',dept:'설비보전팀',phone:'010-1111-2222',skill:'기계'},{id:'T2',name:'이전기',dept:'설비보전팀',phone:'010-3333-4444',skill:'전기/제어'}],
+ part:[{id:'P1',code:'BRG-6205',name:'베어링 6205',spec:'SKF',stock:12,min:5,unit:'EA',price:8000,loc:'A-01'},
+       {id:'P2',code:'VB-A42',name:'V벨트 A42',spec:'반도',stock:2,min:4,unit:'EA',price:15000,loc:'A-03'},
+       {id:'P3',code:'SOL-24V',name:'솔레노이드밸브 24V',spec:'SMC',stock:6,min:2,unit:'EA',price:45000,loc:'B-02'}],
+ req:[{id:'R1',eq:'E2',title:'유압 누유 및 압력저하',desc:'실린더 하부 누유',priority:'긴급',requester:'생산1팀 박반장',at:'2026-11-05T09:10',status:'작업중',tech:'T1'},
+      {id:'R2',eq:'E1',title:'스핀들 이음',desc:'고속회전시 소음',priority:'보통',requester:'가공팀',at:'2026-10-20T14:00',status:'완료',tech:'T1'}],
+ wo:[{id:'W1',req:'R2',tech:'T1',start:'2026-10-20T15:00',end:'2026-10-20T18:30',cause:'베어링 마모',work:'스핀들 베어링 교체',parts:[{part:'P1',qty:2}]}],
+ move:[]};}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||seed()}catch(e){return seed()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}render()}
+const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const byId=(t,id)=>db[t].find(x=>x.id===id)||{};
+const opts=(t,lab,sel)=>db[t].map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(lab(x))}</option>`).join('');
+const hrs=(a,b)=>a&&b?Math.max(0,(new Date(b)-new Date(a))/36e5):0;
+function fdata(f){return Object.fromEntries(new FormData(f))}
+
+function stats(eid){
+ const wos=db.wo.filter(w=>byId('req',w.req).eq===eid&&w.end);
+ const n=db.req.filter(r=>r.eq===eid).length;
+ const down=wos.reduce((s,w)=>s+hrs(w.start,w.end),0);
+ const e=byId('eq',eid);const run=hrs(e.installed||today(),today());
+ return{n,mttr:wos.length?down/wos.length:0,mtbf:n?(run-down)/n:0,down};
+}
+
+function nav(){$('#nav').innerHTML=Object.entries(TABS).map(([k,v])=>`<button class="${k===tab?'on':''}" onclick="tab='${k}';render()">${v}</button>`).join('')}
+
+const V={
+dash(){
+ const open=db.req.filter(r=>r.status!=='완료').length;
+ const low=db.part.filter(p=>+p.stock<=+p.min);
+ const fail=db.eq.filter(e=>e.status==='고장').length;
+ const all=db.eq.map(e=>({e,...stats(e.id)}));const max=Math.max(1,...all.map(x=>x.n));
+ const cost=db.wo.reduce((s,w)=>s+w.parts.reduce((a,p)=>a+p.qty*(byId('part',p.part).price||0),0),0);
+ return `<div class="kpis">
+ <div class="kpi"><b>${db.eq.length}</b><span>등록 설비</span></div>
+ <div class="kpi"><b class="${fail?'low':''}">${fail}</b><span>고장 설비</span></div>
+ <div class="kpi"><b>${open}</b><span>미완료 수리요청</span></div>
+ <div class="kpi"><b class="${low.length?'low':''}">${low.length}</b><span>안전재고 미달 예비품</span></div>
+ <div class="kpi"><b>${cost.toLocaleString()}원</b><span>누적 부품비용</span></div></div>
+ <div class="card"><h2>설비별 고장율 / 신뢰성 지표</h2><div class="tw"><table><tr><th>설비</th><th>상태</th><th>고장건수</th><th style="width:30%">고장 빈도</th><th>총 정지시간</th><th>MTTR(h)</th><th>MTBF(h)</th></tr>
+ ${all.map(x=>`<tr><td>${esc(x.e.code)} ${esc(x.e.name)}</td><td><span class="tag t-${x.e.status}">${x.e.status}</span></td><td>${x.n}</td><td><div class="bar" style="width:${x.n/max*100}%"></div></td><td>${x.down.toFixed(1)}</td><td>${x.mttr.toFixed(1)}</td><td>${x.mtbf.toFixed(0)}</td></tr>`).join('')}
+ </table></div><p style="color:var(--sub);font-size:12px">MTTR=평균수리시간, MTBF=평균고장간격(설치일 기준 가동시간−정지시간)/고장건수</p></div>
+ <div class="card"><h2>미완료 수리요청</h2>${reqTable(db.req.filter(r=>r.status!=='완료'))}</div>
+ ${low.length?`<div class="card"><h2>⚠ 재고 보충 필요</h2>${low.map(p=>`<div class="low">${esc(p.name)} — 현재 ${p.stock} / 안전 ${p.min} ${esc(p.unit)}</div>`).join('')}</div>`:''}`;
+},
+eq(){return `<div class="card"><h2>설비 등록</h2><form onsubmit="add(event,'eq')">
+ <label>설비코드<input name="code" required></label><label>설비명<input name="name" required></label><label>라인/위치<input name="line"></label><label>제조사<input name="maker"></label><label>설치일<input type="date" name="installed"></label>
+ <label>상태<select name="status"><option>가동</option><option>고장</option><option>정비중</option><option>정지</option></select></label><button class="btn">등록</button></form></div>
+ <div class="card"><div class="tw"><table><tr><th>코드</th><th>설비명</th><th>라인</th><th>제조사</th><th>설치일</th><th>상태</th><th>고장</th><th></th></tr>
+ ${db.eq.map(e=>`<tr><td>${esc(e.code)}</td><td>${esc(e.name)}</td><td>${esc(e.line)}</td><td>${esc(e.maker)}</td><td>${esc(e.installed)}</td>
+ <td><select onchange="setF('eq','${e.id}','status',this.value)">${['가동','고장','정비중','정지'].map(s=>`<option ${s===e.status?'selected':''}>${s}</option>`).join('')}</select></td><td>${stats(e.id).n}</td>
+ <td><button class="btn s r" onclick="del('eq','${e.id}')">삭제</button></td></tr>`).join('')}</table></div></div>`},
+req(){return `<div class="card"><h2>수리요청 등록</h2><form onsubmit="add(event,'req')">
+ <label>설비<select name="eq" required>${opts('eq',x=>x.code+' '+x.name)}</select></label><label>제목<input name="title" required></label>
+ <label>긴급도<select name="priority"><option>보통</option><option>긴급</option><option>낮음</option></select></label><label>요청자<input name="requester"></label>
+ <label>발생일시<input type="datetime-local" name="at" value="${today()}"></label><label class="full">고장 현상<textarea name="desc"></textarea></label><button class="btn">요청</button></form></div>
+ <div class="card">${reqTable(db.req,true)}</div>`},
+wo(){const avail=db.req.filter(r=>r.status!=='완료');return `<div class="card"><h2>수리작업 등록 (작업완료 보고)</h2><form onsubmit="addWo(event)">
+ <label>수리요청<select name="req" required>${avail.map(r=>`<option value="${r.id}">${esc(byId('eq',r.eq).code)} - ${esc(r.title)}</option>`).join('')}</select></label>
+ <label>작업자<select name="tech">${opts('tech',x=>x.name)}</select></label><label>시작<input type="datetime-local" name="start" value="${today()}"></label><label>종료<input type="datetime-local" name="end" value="${today()}"></label>
+ <label>고장원인<input name="cause"></label><label>사용부품<select name="part"><option value="">없음</option>${opts('part',x=>`${x.name} (재고 ${x.stock})`)}</select></label><label>수량<input type="number" name="qty" min="0" value="0"></label>
+ <label class="full">작업내용<textarea name="work" required></textarea></label><label><span><input type="checkbox" name="done" checked> 요청 완료처리 + 설비 가동전환</span></label><button class="btn">저장</button></form></div>
+ <div class="card"><div class="tw"><table><tr><th>설비</th><th>요청</th><th>작업자</th><th>작업시간</th><th>원인</th><th>작업내용</th><th>사용부품</th><th></th></tr>
+ ${db.wo.slice().reverse().map(w=>{const r=byId('req',w.req);return `<tr><td>${esc(byId('eq',r.eq).name)}</td><td>${esc(r.title)}</td><td>${esc(byId('tech',w.tech).name)}</td><td>${esc(w.start.replace('T',' '))}<br>~ ${esc((w.end||'').replace('T',' '))} (${hrs(w.start,w.end).toFixed(1)}h)</td><td>${esc(w.cause)}</td><td>${esc(w.work)}</td><td>${w.parts.map(p=>esc(byId('part',p.part).name)+' ×'+p.qty).join('<br>')}</td><td><button class="btn s r" onclick="del('wo','${w.id}')">삭제</button></td></tr>`}).join('')}</table></div></div>`},
+tech(){return `<div class="card"><h2>담당자 등록</h2><form onsubmit="add(event,'tech')"><label>이름<input name="name" required></label><label>부서<input name="dept"></label><label>연락처<input name="phone"></label><label>전문분야<input name="skill"></label><button class="btn">등록</button></form></div>
+ <div class="card"><div class="tw"><table><tr><th>이름</th><th>부서</th><th>연락처</th><th>분야</th><th>진행중</th><th>완료작업</th><th>총작업시간</th><th></th></tr>
+ ${db.tech.map(t=>{const w=db.wo.filter(x=>x.tech===t.id);return `<tr><td>${esc(t.name)}</td><td>${esc(t.dept)}</td><td>${esc(t.phone)}</td><td>${esc(t.skill)}</td><td>${db.req.filter(r=>r.tech===t.id&&r.status!=='완료').length}</td><td>${w.length}</td><td>${w.reduce((s,x)=>s+hrs(x.start,x.end),0).toFixed(1)}h</td><td><button class="btn s r" onclick="del('tech','${t.id}')">삭제</button></td></tr>`}).join('')}</table></div></div>`},
+part(){return `<div class="card"><h2>예비품 등록</h2><form onsubmit="add(event,'part')"><label>품번<input name="code" required></label><label>품명<input name="name" required></label><label>규격/메이커<input name="spec"></label>
+ <label>현재고<input type="number" name="stock" value="0"></label><label>안전재고<input type="number" name="min" value="1"></label><label>단위<input name="unit" value="EA"></label><label>단가<input type="number" name="price" value="0"></label><label>보관위치<input name="loc"></label><button class="btn">등록</button></form></div>
+ <div class="card"><div class="tw"><table><tr><th>품번</th><th>품명</th><th>규격</th><th>위치</th><th>현재고</th><th>안전</th><th>단가</th><th>입출고</th><th></th></tr>
+ ${db.part.map(p=>`<tr><td>${esc(p.code)}</td><td>${esc(p.name)}</td><td>${esc(p.spec)}</td><td>${esc(p.loc)}</td><td class="${+p.stock<=+p.min?'low':''}">${p.stock} ${esc(p.unit)}</td><td>${p.min}</td><td>${(+p.price).toLocaleString()}</td>
+ <td><input type="number" id="q${p.id}" value="1" style="width:60px"> <button class="btn s" onclick="mv('${p.id}',1)">입고</button> <button class="btn s g" onclick="mv('${p.id}',-1)">출고</button></td><td><button class="btn s r" onclick="del('part','${p.id}')">삭제</button></td></tr>`).join('')}</table></div></div>
+ <div class="card"><h2>입출고 이력</h2><table><tr><th>일시</th><th>품명</th><th>구분</th><th>수량</th><th>비고</th></tr>${db.move.slice(-30).reverse().map(m=>`<tr><td>${m.at.replace('T',' ')}</td><td>${esc(byId('part',m.part).name)}</td><td>${m.qty>0?'입고':'출고'}</td><td>${Math.abs(m.qty)}</td><td>${esc(m.note)}</td></tr>`).join('')}</table></div>`}
+};
+function reqTable(list,edit){return `<div class="tw"><table><tr><th>발생일시</th><th>설비</th><th>제목</th><th>긴급도</th><th>요청자</th><th>담당자</th><th>상태</th>${edit?'<th></th>':''}</tr>
+ ${list.slice().sort((a,b)=>b.at.localeCompare(a.at)).map(r=>`<tr><td>${esc(r.at.replace('T',' '))}</td><td>${esc(byId('eq',r.eq).name)}</td><td>${esc(r.title)}<br><small style="color:var(--sub)">${esc(r.desc)}</small></td><td>${r.priority==='긴급'?'<b class="low">긴급</b>':esc(r.priority)}</td><td>${esc(r.requester)}</td>
+ <td>${edit?`<select onchange="setF('req','${r.id}','tech',this.value)"><option value="">미배정</option>${opts('tech',x=>x.name,r.tech)}</select>`:esc(byId('tech',r.tech).name||'미배정')}</td>
+ <td>${edit?`<select onchange="setF('req','${r.id}','status',this.value)">${['요청','접수','작업중','완료'].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag t-${r.status}">${r.status}</span>`}</td>
+ ${edit?`<td><button class="btn s r" onclick="del('req','${r.id}')">삭제</button></td>`:''}</tr>`).join('')}</table></div>`}
+
+function add(ev,t){ev.preventDefault();const d=fdata(ev.target);d.id=uid(t);
+ if(t==='part'){d.stock=+d.stock;d.min=+d.min;d.price=+d.price}
+ if(t==='req'){d.status='요청';d.tech='';const e=byId('eq',d.eq);if(e.id)e.status='고장'}
+ db[t].push(d);save()}
+function addWo(ev){ev.preventDefault();const d=fdata(ev.target);const parts=[];
+ if(d.part&&+d.qty>0){const p=byId('part',d.part);if(+d.qty>p.stock){alert('재고 부족: 현재 '+p.stock);return}
+  p.stock-=+d.qty;parts.push({part:d.part,qty:+d.qty});db.move.push({at:today(),part:d.part,qty:-d.qty,note:'수리작업 사용'})}
+ db.wo.push({id:uid('W'),req:d.req,tech:d.tech,start:d.start,end:d.end,cause:d.cause,work:d.work,parts});
+ const r=byId('req',d.req);r.tech=r.tech||d.tech;
+ if(d.done){r.status='완료';const e=byId('eq',r.eq);if(e.id)e.status='가동'}else r.status='작업중';save()}
+function setF(t,id,k,v){byId(t,id)[k]=v;save()}
+function del(t,id){if(confirm('삭제할까요?')){db[t]=db[t].filter(x=>x.id!==id);save()}}
+function mv(id,s){const q=+document.getElementById('q'+id).value;const p=byId('part',id);if(!q)return;if(s<0&&q>p.stock){alert('재고 부족');return}
+ p.stock+=s*q;db.move.push({at:today(),part:id,qty:s*q,note:s>0?'구매입고':'수동출고'});save()}
+function render(){nav();$('#app').innerHTML=V[tab]()}
+render();
+</script>
+</body>
+</html>
