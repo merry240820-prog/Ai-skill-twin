@@ -1,0 +1,12 @@
+{
+  "name": "instagram-story-mcp",
+  "version": "0.1.0",
+  "description": "MCP server to publish Instagram Stories via the official Graph API (works with Codex and Claude)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": { "start": "node src/server.js", "check": "node --check src/server.js" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.8"
+  }
+}

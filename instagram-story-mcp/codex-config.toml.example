@@ -1,0 +1,8 @@
+# ~/.codex/config.toml 에 추가 (경로는 본인 환경에 맞게)
+[mcp_servers.instagram-story]
+command = "node"
+args = ["/ABSOLUTE/PATH/Ai-skill-twin/instagram-story-mcp/src/server.js"]
+
+[mcp_servers.instagram-story.env]
+IG_USER_ID = "여기에_IG_사용자_ID"
+IG_ACCESS_TOKEN = "여기에_장기_액세스_토큰"

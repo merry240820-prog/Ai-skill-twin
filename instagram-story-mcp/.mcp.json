@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "instagram-story": {
+      "command": "node",
+      "args": ["./src/server.js"],
+      "env": { "IG_USER_ID": "${IG_USER_ID}", "IG_ACCESS_TOKEN": "${IG_ACCESS_TOKEN}" }
+    }
+  }
+}
