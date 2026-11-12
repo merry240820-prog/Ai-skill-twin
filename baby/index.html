@@ -26,13 +26,16 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 input,select,textarea{font:inherit;color:var(--text)}
 #app{max-width:520px;margin:0 auto;min-height:100%;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 header.top{position:sticky;top:0;z-index:5;background:var(--card);display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
-header.top .av{width:40px;height:40px;border-radius:50%;background:var(--pri-bg);display:grid;place-items:center;font-size:22px}
+header.top .av{width:40px;height:40px;border-radius:50%;background:var(--pri-bg);display:grid;place-items:center;font-size:22px;overflow:hidden}
 header.top h1{font-size:18px;margin:0;flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 header.top .who{font-size:12px;color:var(--pri-d);background:var(--pri-bg);padding:4px 10px;border-radius:99px;font-weight:600}
 section.card{background:var(--card);margin-top:10px;padding:18px 16px}
 section.card h2{font-size:13px;color:var(--sub);margin:0 0 12px;font-weight:600}
 .profile{display:flex;align-items:center;gap:14px}
-.profile .big{width:68px;height:68px;border-radius:50%;background:var(--pri-bg);display:grid;place-items:center;font-size:38px;flex:none}
+.profile .big{width:68px;height:68px;border-radius:50%;background:var(--pri-bg);display:grid;place-items:center;font-size:38px;flex:none;overflow:hidden}
+.av img,.big img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .big{width:72px;height:72px;border-radius:50%;background:var(--pri-bg);display:grid;place-items:center;font-size:40px;overflow:hidden;flex:none}
 .profile .nm{font-size:20px;font-weight:700}
 .profile .dd{color:var(--pri-d);font-weight:700}
 .profile .sm{color:var(--sub);font-size:13px}
@@ -125,8 +128,10 @@ const addMonths = (d,m) => { const r = new Date(d); const day = r.getDate(); r.s
 const fmtDate = d => `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}`;
 const fmtDay = d => `${d.getMonth()+1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
 const fmtDur = min => min >= 60 ? `${Math.floor(min/60)}시간${min%60 ? ' '+min%60+'분' : ''}` : `${min}분`;
-let toastT;
+let toastT, tmpPhoto;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 1800); }
+
+const avatar = () => S.baby.photo ? `<img src="${S.baby.photo}" alt="">` : esc(S.baby.emoji||'👶');
 
 function ageInfo(){
   if (!S.baby.birth) return null;
@@ -171,7 +176,7 @@ function render(){
   renderTabs();
   const a = ageInfo();
   const title = S.baby.name || '우리 아기';
-  const head = `<header class="top"><div class="av">${esc(S.baby.emoji||'👶')}</div><h1>${esc(title)}</h1>${S.who?`<span class="who">${esc(S.who)}</span>`:''}</header>`;
+  const head = `<header class="top"><div class="av">${avatar()}</div><h1>${esc(title)}</h1>${S.who?`<span class="who">${esc(S.who)}</span>`:''}</header>`;
   const body = { home:vHome, record:vRecord, growth:vGrowth, health:vHealth, menu:vMenu }[tab](a);
   $('#app').innerHTML = head + body;
 }
@@ -198,7 +203,7 @@ function vHome(a){
 
   return `
   <section class="card"><div class="profile">
-    <div class="big">${esc(S.baby.emoji||'👶')}</div>
+    <div class="big">${avatar()}</div>
     <div style="flex:1">
       <div class="nm">${esc(S.baby.name||'우리 아기')}</div>
       <div><span class="dd">D+${a.dplus}</span> <span class="sm">· ${a.months}개월 ${a.rest}일</span></div>
@@ -341,7 +346,7 @@ function vMenu(){
     <p class="tip">같은 주소(GitHub Pages)로 접속해 각자 기록한 뒤, 가끔 내보내기 → 합치기를 하면 두 사람의 기록이 하나로 모여요.</p>
   </section>
   <section class="card"><h2>앱</h2>
-    <div class="list-btn" style="cursor:default"><span>버전<small>v1.0 · 얼굴 사진·상세 관리는 다음 버전</small></span></div>
+    <div class="list-btn" style="cursor:default"><span>버전<small>v1.1 · 상세 관리 항목은 다음 버전</small></span></div>
     <button class="list-btn" data-act="reset" style="color:var(--red)"><span>모든 데이터 삭제</span></button>
   </section>
   <input type="file" id="file" accept="application/json,.json" hidden>`;
@@ -412,7 +417,12 @@ function babySheet(){
     <label class="f">생일 (출생일)</label><input class="inp" id="b_birth" type="date" value="${esc(b.birth)}">
     <label class="f">성별</label>${segHtml('gender',['여아','남아','비공개'],b.gender||'')}
     <label class="f">프로필 아이콘</label>${segHtml('emoji',emojis,b.emoji||'👶')}
-    <p class="tip">📷 아기 얼굴 사진은 다음 버전에서 지원할 예정이에요.</p>
+    <label class="f">얼굴 사진</label>
+    <div class="photo-pick"><div class="big" id="b_prev">${avatar()}</div>
+      <div><button type="button" class="btn sm" data-act="pickPhoto">사진 선택</button>
+      <button type="button" class="btn sm ghost" data-act="clearPhoto" style="margin-left:6px">삭제</button></div></div>
+    <input type="file" id="b_photo" accept="image/*" hidden>
+    <p class="tip">사진은 기기 안에만 저장되고, 내보내기 파일에 포함돼 배우자에게도 공유돼요.</p>
     <button class="btn" data-act="saveBaby">저장</button>`);
 }
 function whoSheet(){
@@ -474,13 +484,15 @@ document.addEventListener('click', e => {
     save(); return render();
   }
   switch (d.act){
-    case 'editBaby': return babySheet();
+    case 'editBaby': tmpPhoto = undefined; return babySheet();
+    case 'pickPhoto': return $('#b_photo').click();
+    case 'clearPhoto': tmpPhoto = null; $('#b_prev').innerHTML = esc(segVal('emoji')||'👶'); return;
     case 'editWho': return whoSheet();
     case 'addGrowth': return growthSheet();
     case 'wake': { const s = activeSleep(); if (s){ s.end = Date.now(); save(); render(); toast('수면 기록 완료'); } return; }
     case 'saveBaby': {
       if (!val('b_birth')) return toast('생일을 입력해 주세요');
-      S.baby = { name: val('b_name').trim(), birth: val('b_birth'), gender: segVal('gender'), emoji: segVal('emoji') || '👶' };
+      S.baby = { name: val('b_name').trim(), birth: val('b_birth'), gender: segVal('gender'), emoji: segVal('emoji') || '👶', photo: tmpPhoto === undefined ? S.baby.photo : tmpPhoto };
       save(); closeSheet(); render(); return toast('저장했어요');
     }
     case 'saveWho': { S.who = val('w_custom').trim() || segVal('who'); save(); closeSheet(); render(); return; }
@@ -494,7 +506,23 @@ document.addEventListener('click', e => {
     case 'reset': if (confirm('모든 기록이 삭제돼요. 계속할까요?') && confirm('정말 삭제할까요? 되돌릴 수 없어요.')){ S = defaults(); save(); render(); } return;
   }
 });
-document.addEventListener('change', e => {
+function resizePhoto(file){
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const n = 320, sc = Math.max(n/img.width, n/img.height), w = img.width*sc, h = img.height*sc;
+      const c = document.createElement('canvas'); c.width = c.height = n;
+      c.getContext('2d').drawImage(img, (n-w)/2, (n-h)/2, w, h);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', .82));
+    };
+    img.onerror = rej; img.src = url;
+  });
+}
+document.addEventListener('change', async e => {
+  if (e.target.id === 'b_photo' && e.target.files[0]){
+    try { tmpPhoto = await resizePhoto(e.target.files[0]); $('#b_prev').innerHTML = `<img src="${tmpPhoto}" alt="">`; } catch(err){ toast('사진을 불러오지 못했어요'); }
+    e.target.value = ''; return;
+  }
   if (e.target.id !== 'file' || !e.target.files[0]) return;
   const r = new FileReader();
   r.onload = () => { try { const n = mergeData(JSON.parse(r.result)); render(); toast(n>0 ? `${n}개 기록을 합쳤어요` : '새로 추가된 기록이 없어요'); } catch(err){ toast('올바른 백업 파일이 아니에요'); } };
