@@ -1,0 +1,12 @@
+{
+  "name": "우리 아기 육아 다이어리",
+  "short_name": "우리아기",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2bbbad",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
