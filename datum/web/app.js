@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from '/static/vendor/OrbitControls.js';
 import { icon, KIND_ICON } from '/static/icons.js';
+import { createDrawing } from '/static/drawing.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -197,6 +198,7 @@ async function applyState(s, { fit = false } = {}) {
   renderTimeline();
   updateGrid();
   if (fit) fitView(false);
+  if (!s.history.length || s.history.at(-1).kind === 'open' || s.history.at(-1).kind === 'new') { if (s.history.length <= 1) drawingMode.reset(); }
   activeTool?.refresh?.();
   $('#btn-undo').disabled = s.history.length <= 1;
   $('#btn-redo').disabled = !s.redo.length;
@@ -1380,12 +1382,13 @@ const ACT = {
   stl: () => safe(() => download('/api/export/stl', 'stl')),
   png: () => {
     renderer.render(scene, camera);
-    const a = document.createElement('a');
-    a.href = renderer.domElement.toDataURL('image/png');
-    a.download = `${stem()}.png`;
-    a.click();
-    toast('화면을 PNG로 저장했습니다');
+    renderer.domElement.toBlob((b) => saveBlob(b, `${stem()}.png`), 'image/png');
   },
+  drawing: () => safe(async () => {
+    if (!state.bodies.some((b) => b.visible)) throw new Error('도면으로 만들 부품이 없습니다 — STEP을 먼저 여세요');
+    setTool(null);
+    await drawingMode.open();
+  }),
   undo: () => safe(async () => { await applyState(await post('/api/op', { op: 'undo' })); toast('실행 취소'); }),
   redo: () => safe(async () => { await applyState(await post('/api/op', { op: 'redo' })); toast('다시 실행'); }),
   deleteBody: () => safe(async () => {
@@ -1434,6 +1437,9 @@ const RIBBON = [
   ] },
   { tab: '시뮬레이션', groups: [
     { name: '정적 해석', items: [['simulate', '응력 해석', 'sim']] },
+  ] },
+  { tab: '도면', groups: [
+    { name: '2D 도면', items: [['drawing', '도면 만들기', 'drawing', 'Ctrl+D', () => ACT.drawing()]] },
   ] },
   { tab: '검사', groups: [
     { name: '측정', items: [['measure', '측정', 'measure', 'M'], ['mass', '질량 특성', 'mass'], ['section', '단면도', 'section', 'X']] },
@@ -1526,22 +1532,44 @@ vp.addEventListener('drop', (e) => {
   const f = e.dataTransfer.files[0];
   if (f) safe(() => uploadStep(f, state.bodies.length && e.shiftKey ? 'import' : 'open'));
 });
-async function download(url, ext) {
-  const blob = await api(url);
+// 파일 저장: Windows 앱(pywebview)에서는 '다른 이름으로 저장' 창을, 브라우저에서는 다운로드를 쓴다
+async function saveBlob(blob, name) {
+  const bridge = window.pywebview?.api;
+  if (bridge?.save_file) {
+    const b64 = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.readAsDataURL(blob); });
+    const where = await bridge.save_file(name, b64);
+    if (where) toast(`저장 · ${where}`);
+    return where;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${stem()}_edited.${ext}`;
+  a.download = name;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  if (ext === 'step') $('#dirty').classList.remove('on');
-  toast(`저장 · ${a.download}`);
+  toast(`저장 · ${name}`);
+  return name;
 }
+async function download(url, ext) {
+  const blob = await api(url);
+  const ok = await saveBlob(blob, `${stem()}_edited.${ext}`);
+  if (ok && ext === 'step') $('#dirty').classList.remove('on');
+}
+
+const drawingMode = createDrawing({
+  api, post, toast, icon, fmt, saveBlob,
+  getDocName: () => stem(),
+  getRevision: () => state.revision,
+  getBodyList: () => state.bodies.map((b) => ({ id: b.id, name: b.name })),
+  onClose: () => { resize(); },
+});
 
 // =============================================================== 키보드(솔리드웍스 기본 단축키)
 let lastMouse = [innerWidth / 2, innerHeight / 2];
 window.addEventListener('pointermove', (e) => { lastMouse = [e.clientX, e.clientY]; });
 window.addEventListener('keydown', (e) => {
-  if (!$('#palette').hidden) return;
+  if (!$('#palette').hidden || drawingMode.isOpen()) return;
   if (e.target.matches('input, select, textarea')) { if (e.key === 'Escape') e.target.blur(); return; }
   const k = e.key.toLowerCase();
   const mod = e.ctrlKey || e.metaKey;
@@ -1552,7 +1580,7 @@ window.addEventListener('keydown', (e) => {
     if (k === '8') { e.preventDefault(); normalTo(); return; }
     if (arrow) { e.preventDefault(); panBy(-arrow[0], -arrow[1]); return; }
     const map = { z: () => (e.shiftKey ? ACT.redo() : ACT.undo()), y: ACT.redo, s: ACT.save, o: ACT.open, n: ACT.new, k: openPalette,
-      b: ACT.rebuild, q: ACT.rebuild, r: () => { resize(); toast('화면 다시 그리기'); }, m: () => runCmd('mate'), c: ACT.copyBody, v: ACT.paste };
+      b: ACT.rebuild, q: ACT.rebuild, d: ACT.drawing, r: () => { resize(); toast('화면 다시 그리기'); }, m: () => runCmd('mate'), c: ACT.copyBody, v: ACT.paste };
     if (map[k] && !(k === 'c' && window.getSelection()?.toString())) { e.preventDefault(); map[k](); }
     return;
   }

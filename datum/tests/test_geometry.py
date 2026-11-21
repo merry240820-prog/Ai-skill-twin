@@ -293,3 +293,37 @@ def test_document_mates_undo_and_fixed():
     d.undo(); d.undo()
     assert d.mates == []
     assert g.mass_properties(d.body(b.id).shape)["bbox_min"][2] == pytest.approx(50)
+
+
+def test_drawing_views_dims_and_exports(tmp_path):
+    from core import drawing
+    s = g.hole(box(80, 50, 12), find_face(box(80, 50, 12), [0, 0, 1]), [20, 25, 12], 8)
+    d = drawing.make_drawing(s, "A3")
+    views = {v["id"]: v for v in d["views"]}
+    assert set(views) == {"front", "top", "right", "iso"}
+    assert views["front"]["bbox"] == pytest.approx([0, 0, 80, 12], abs=1e-6)
+    assert views["top"]["bbox"] == pytest.approx([0, 0, 80, 50], abs=1e-6)
+    assert any(e["t"] == "circle" and e["r"] == pytest.approx(4) for e in views["top"]["visible"])
+    assert views["front"]["hidden"]  # 구멍은 정면도에서 숨은선
+    kinds = {(x["view"], x["type"]) for x in d["dims"]}
+    assert ("front", "h") in kinds and ("front", "v") in kinds and ("top", "dia") in kinds
+    assert d["scale"] in ([2, 1], [1, 1])
+    W, H = d["sheet"]["w"], d["sheet"]["h"]
+    # 모든 뷰가 윤곽선 안, 표제란과 겹치지 않음
+    for v in d["views"]:
+        x0, y0, x1, y1 = v["bbox"]
+        sx0, sx1 = v["ox"] + x0 * v["scale"], v["ox"] + x1 * v["scale"]
+        sy0, sy1 = v["oy"] - y1 * v["scale"], v["oy"] - y0 * v["scale"]
+        assert 10 <= sx0 and sx1 <= W - 10 and 10 <= sy0 and sy1 <= H - 10
+        assert not (sx1 > W - 10 - 180 and sy1 > H - 10 - 44)
+    prims = {"sheet": d["sheet"], "prims": [
+        {"t": "line", "p": [20, 20, 100, 20], "s": "thick"}, {"t": "circle", "c": [50, 50], "r": 5, "s": "thick"},
+        {"t": "arc", "c": [80, 80], "r": 5, "a0": 0, "a1": 90, "s": "thick"},
+        {"t": "poly", "p": [0, 0, 3, 1, 3, -1, 0, 0], "s": "dim", "fill": True},
+        {"t": "text", "x": 60, "y": 30, "str": "Ø8 도면", "h": 3.5, "a": "middle", "rot": 90, "s": "dim"}]}
+    drawing.export_pdf(prims, str(tmp_path / "a.pdf"))
+    drawing.export_dxf(prims, str(tmp_path / "a.dxf"))
+    assert (tmp_path / "a.pdf").read_bytes()[:4] == b"%PDF"
+    import ezdxf
+    msp = ezdxf.readfile(str(tmp_path / "a.dxf")).modelspace()
+    assert {e.dxftype() for e in msp} >= {"LINE", "CIRCLE", "ARC", "TEXT"}

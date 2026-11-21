@@ -23,11 +23,12 @@ from pydantic import BaseModel
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core import geometry as g  # noqa: E402
 from core import stepio  # noqa: E402
-from core import assembly, fea  # noqa: E402
+from core import assembly, drawing, fea  # noqa: E402
+from core.geometry import make_compound  # noqa: E402
 from core.document import Document  # noqa: E402
 
 APP_NAME = "Datum"
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI(title=APP_NAME, version=VERSION)
 doc = Document()
@@ -225,6 +226,44 @@ def simulate(req: SimReq):
     result = fea.static_analysis(shape, req.fixed, req.loads, req.material, req.density)  # 무거운 계산은 잠금 밖에서
     result["body"], result["rev"] = req.body, rev
     return result
+
+
+# ---------------------------------------------------------------- 도면
+class DrawReq(BaseModel):
+    bodies: list[int] | None = None  # 비우면 보이는 바디 전부(조립도)
+    sheet: str = "A3"
+    scale: list[int] | None = None  # [분자, 분모], 비우면 자동
+    views: list[str] = ["front", "top", "right", "iso"]
+    hidden: bool = True
+
+
+@app.post("/api/drawing")
+def make_drawing(req: DrawReq):
+    with lock:
+        bodies = [b for b in doc.bodies if (b.id in req.bodies if req.bodies else b.visible)]
+        if not bodies:
+            raise g.GeometryError("도면으로 만들 바디가 없습니다")
+        shape = bodies[0].shape if len(bodies) == 1 else make_compound([b.shape for b in bodies])
+        names = [b.name for b in bodies]
+    d = drawing.make_drawing(shape, req.sheet, tuple(req.scale) if req.scale else None, tuple(req.views), req.hidden)
+    d["part"] = names[0] if len(names) == 1 else f"{doc.name.rsplit('.', 1)[0]} 조립도"
+    d["date"] = drawing.today()
+    return d
+
+
+class ExportReq(BaseModel):
+    sheet: dict
+    prims: list[dict]
+    title: str = "drawing"
+
+
+@app.post("/api/drawing/export/{fmt}")
+def export_drawing(fmt: str, req: ExportReq):
+    if fmt not in ("pdf", "dxf"):
+        raise HTTPException(400, "pdf 또는 dxf")
+    fn = drawing.export_pdf if fmt == "pdf" else drawing.export_dxf
+    data = _tmp_export(lambda p: fn(req.model_dump(), p), "." + fmt)
+    return _download(data, f"{req.title}.{fmt}", "application/pdf" if fmt == "pdf" else "image/vnd.dxf")
 
 
 # ---------------------------------------------------------------- 편집

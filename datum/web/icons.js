@@ -59,6 +59,9 @@ const P = {
   sim: '<path d="M3 20h18"/><path d="M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6" opacity=".5"/><path d="M12 4v-1M12 9l0 0"/><circle cx="12" cy="10" r="1.6" fill="currentColor"/>',
   stress: '<rect x="4" y="3" width="5" height="18" rx="1"/><path d="M13 6h7M13 10h5M13 14h7M13 18h4"/>',
   rebuild: '<path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/>',
+  select: '<path d="M5 3l14 7-6 2-2 6z"/>',
+  note: '<path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/>',
+  drawing: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M13 15h7M13 15v5"/><path d="M6 8h5v5H6z"/><path d="M6 16h4" stroke-dasharray="1.5 1.5"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
 };
 

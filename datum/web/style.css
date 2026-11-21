@@ -242,3 +242,31 @@ ul.list li em { margin-left: auto; font: 12px var(--mono); font-style: normal; c
 #viewmenu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border-radius: 7px; text-align: left; }
 #viewmenu button span { flex: 1; }
 #viewmenu button:hover { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- 도면 (v0.4) */
+main { position: relative; }
+#drawing { position: absolute; inset: 0; z-index: 10; display: grid; grid-template-columns: 1fr 300px; background: var(--bg); }
+#drawing[hidden] { display: none !important; }
+.d-canvas { position: relative; background: var(--view-bottom); min-width: 0; overflow: hidden; }
+#d-svg { width: 100%; height: 100%; display: block; --d-ink: #111; --d-dim: #1d4ed8; --d-center: #b91c1c; user-select: none; }
+#d-svg .paper { fill: #fff; filter: drop-shadow(0 2px 10px rgba(0,0,0,.25)); }
+#d-svg text { font-family: var(--font); }
+#d-svg .dimg { cursor: move; }
+#d-svg .dimg:hover line, #d-svg .dimg:hover polyline, #d-svg .dimg:hover path { stroke: var(--accent) !important; }
+#d-svg .dimg:hover text, #d-svg .dimg.sel text { fill: var(--accent) !important; }
+#d-svg .dimg.sel line, #d-svg .dimg.sel path { stroke: #f97316 !important; }
+#d-svg .dimg.sel polygon { fill: #f97316 !important; }
+#d-svg .snap { fill: none; stroke: #f97316; stroke-width: .5; }
+#d-svg .snap.picked { fill: #f97316; }
+.d-toolbar { position: absolute; top: 12px; left: 12px; z-index: 2; display: flex; align-items: center; gap: 2px; padding: 4px; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.d-toolbar button { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 8px; color: var(--ink-2); font-size: 12px; }
+.d-toolbar button:hover { background: var(--surface-2); color: var(--ink); }
+.d-toolbar button.on { background: var(--accent-soft); color: var(--accent); }
+.d-toolbar i { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+.d-hint { position: absolute; left: 12px; right: 12px; bottom: 10px; margin: 0; text-align: center; color: var(--ink-2); font-size: 12px; pointer-events: none; }
+.d-panel { border-left: 1px solid var(--line); }
+.d-panel .pane-head .icon-btn { margin-left: auto; }
+.d-body { padding: 0 14px 16px; }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12.5px; }
+.checks label { display: flex; align-items: center; gap: 6px; }
+body.drawing-mode #timeline-bar { opacity: .5; pointer-events: none; }
