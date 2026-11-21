@@ -10,20 +10,22 @@
 같은 B-Rep 정밀 형상(OpenCascade 커널)이라 원·원통이 실제 곡면으로 유지되고, 부품 이름과 색상도
 보존된다.
 
-## 실행
+## 설치 (Windows 11)
 
-| OS | 방법 |
-|---|---|
-| Windows | `run_windows.bat` 더블클릭 (Python 3.10 이상 필요, 첫 실행 때 자동 설치) |
-| macOS / Linux | `./run.sh` |
+Datum은 **Windows 11 전용 데스크톱 프로그램**으로 배포한다. 브라우저 없이 자체 창(Windows 11에 기본 포함된 Edge WebView2)으로
+열리고, 모든 계산은 내 PC 안에서만 한다(인터넷 연결 불필요, 내부 주소 127.0.0.1만 사용).
 
-Edge나 Chrome이 있으면 주소창 없는 앱 창으로 열린다. 서버는 `127.0.0.1`에서만 돌아 파일이 PC 밖으로 나가지 않는다.
+1. GitHub 저장소 → **Actions** → **Datum Windows build** → 가장 최근 성공한 실행 → 아래 **Artifacts**에서
+   `Datum-Setup-Windows11`을 내려받아 압축을 푼다.
+2. `Datum-Setup-0.4.0.exe` 실행 → 설치(관리자 권한 불필요, 내 계정에만 설치).
+   - 처음 실행할 때 Windows SmartScreen이 "알 수 없는 게시자"라고 막으면 **추가 정보 → 실행**을 누른다(개인용이라 코드 서명을 하지 않았다).
+   - 설치 중 "STEP 파일을 Datum으로 열기"를 고르면 탐색기에서 .step 파일을 더블클릭해 바로 열 수 있다.
+3. 시작 메뉴 또는 바탕 화면의 **Datum**으로 실행.
 
-```bash
-pip install -r requirements.txt
-python server.py            # 브라우저 자동 실행
-python server.py --no-browser
-```
+설치 없이 쓰려면 `Datum-portable` 압축을 풀고 `Datum\Datum.exe`를 실행한다.
+직접 빌드하려면 `build_windows.bat`(Python 3.12 필요)을 실행한다. 개발 중에는 `run_windows.bat`(브라우저로 실행)도 쓸 수 있다.
+
+문제가 생기면 `%LOCALAPPDATA%\Datum\datum.log`를 확인하고, `Datum.exe --selftest 결과.txt`로 엔진 점검을 할 수 있다.
 
 ## 벤치마킹해서 가져온 것
 
@@ -43,6 +45,7 @@ python server.py --no-browser
 | 배치 | 이동, 회전, 크기(균일·축별), 대칭, 복사, 바디 삭제 |
 | 어셈블리 | 메이트(일치·거리·동심·평행·수직), 고정/해제, 재생성, 간섭 검사, 분해 보기 — 메이트 목록에서 거리 수정·삭제 |
 | 시뮬레이션 | 정적 응력 해석(FEA): 재질 7종·직접 입력, 고정 면, 힘(N)/압력(MPa) 하중, 메시 밀도 → von Mises 응력·변위 컬러 플롯, 변형 배율, 안전계수 |
+| 도면 | 3D → 2D 도면: 정면·평면·우측면·등각도(3각법, 은선 표시), 자동 척도·배치, 자동 치수(전체 크기·n×Ø·R·구멍 위치), 스마트 치수·지름/반지름·주기 추가, 치수 끌어 옮기기, 공차 문자(`<> ±0.1`), 표제란, **PDF·DXF·SVG** 내보내기 |
 | 검사 | 측정(길이·지름·면적·좌표·법선 / 최소·평행·중심 거리, dX·dY·dZ, 각도), 질량 특성(재질 선택), 단면도 |
 | 보기 | 정면·후면·좌·우·윗면·아랫면·등각, 전체 보기, 음영/와이어, 모서리, 원근/평행, mm/inch |
 
@@ -63,6 +66,22 @@ python server.py --no-browser
 
 솔리드웍스에는 없는 추가 단축키: `M` 측정, `O` 면 이동, `D` 거리 지정, `E` 돌출, `H` 구멍, `R` 필렛, `C` 챔퍼, `B` 결합, `P` 패턴, `T` 이동, `X` 단면.
 
+## 도면 만들기
+
+`도면` 탭 → **도면 만들기**(Ctrl+D). 대상 부품, 용지(A4~A1), 척도(자동 또는 10:1~1:50), 투상도를 고르면 KS 3각법으로
+배치되고 기본 치수가 자동으로 붙는다.
+
+| 도구 | 사용법 |
+|---|---|
+| 치수 (D) | 선 끝점·원 중심 두 곳을 클릭 → 마우스를 위·아래로 빼면 수평, 좌·우로 빼면 수직 치수 → 클릭해서 놓기 |
+| Ø / R | 원이나 호의 테두리를 클릭 |
+| 주기 | 클릭한 곳에 문장(예: 일반 공차) |
+| 편집 | 치수를 끌어 옮기기, 더블클릭해서 문자 수정(`<>`가 측정값), Delete로 삭제 |
+| 출력 | PDF(인쇄용, 맑은 고딕), DXF(AutoCAD 등, 레이어 외형선·숨은선·중심선·치수·문자), SVG |
+
+치수는 모델 좌표에 붙어 있어서 3D 형상을 고친 뒤 도면을 다시 열면 값이 새 형상에 맞게 바뀐다. DXF의 치수는
+선·문자로 분해된 형태(DIMENSION 개체 아님)다.
+
 ## 시뮬레이션 정확도
 
 2차 사면체(10절점) 요소를 쓴다. 외팔보(100×10×10 mm, 강철, 끝단 100 N)로 검증한 결과:
@@ -79,20 +98,23 @@ python server.py --no-browser
 
 ```
 datum/
+├── desktop.py         Windows 앱 진입점(WebView2 창, 저장 창, 자체 점검)
 ├── server.py          로컬 서버(FastAPI): 화면 ↔ 엔진, 메시 캐시, 앱 창 실행
 ├── core/
 │   ├── geometry.py    형상 엔진(OpenCascade): 측정, 면 오프셋, 피처, 불리언, 패턴, 메시
 │   ├── stepio.py      STEP 입출력(XDE): 부품 이름·색, 조립품 위치
 │   ├── assembly.py    메이트 풀이, 간섭 검사
+│   ├── drawing.py     도면: HLR 투상, 배치·척도, 자동 치수, PDF·DXF 출력
 │   ├── fea.py         정적 응력 해석(gmsh 메시 + T10 요소 + AMG 풀이)
 │   └── document.py    문서: 바디, 타임라인, 실행 취소/다시/시점 이동
-├── web/               화면: index.html, style.css, icons.js(자체 아이콘), app.js(three.js)
+├── web/               화면: index.html, style.css, icons.js, app.js(three.js 3D), drawing.js(도면 편집기)
+├── packaging/         PyInstaller 설정, Inno Setup 설치 스크립트, 아이콘
 ├── samples/           예제 STEP
 └── tests/             엔진 테스트(pytest)
 ```
 
 ```bash
-python -m pytest tests   # 21개
+python -m pytest tests   # 22개
 ```
 
 ## 한계
