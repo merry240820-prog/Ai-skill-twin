@@ -165,6 +165,9 @@ def bbox(shape) -> tuple[list[float], list[float]]:
     return [a.X(), a.Y(), a.Z()], [b.X(), b.Y(), b.Z()]
 
 
+_FTYPE = {GeomAbs_Plane: "plane", GeomAbs_Cylinder: "cylinder", GeomAbs_Sphere: "sphere", GeomAbs_Cone: "cone"}
+
+
 def tessellate(shape, quality: float = 1.0) -> dict:
     """면별 삼각형, 모서리별 선, 꼭짓점 좌표를 만든다. 인덱스는 sub_shape와 같다."""
     lo, hi = bbox(shape)
@@ -176,10 +179,11 @@ def tessellate(shape, quality: float = 1.0) -> dict:
     fmap = sub_map(shape, "face")
     for i in range(fmap.Extent()):
         face = _cast["Face"](fmap.FindKey(i + 1))
+        ftype = _FTYPE.get(BRepAdaptor_Surface(face).GetType(), "surface")
         loc = TopLoc_Location()
         tri = BRep_Tool.Triangulation_s(face, loc)
         if tri is None:
-            faces.append({"pos": [], "idx": []})
+            faces.append({"pos": [], "idx": [], "type": ftype})
             continue
         trsf = loc.Transformation()
         pos = []
@@ -191,7 +195,7 @@ def tessellate(shape, quality: float = 1.0) -> dict:
         for t in range(1, tri.NbTriangles() + 1):
             a, b, c = tri.Triangle(t).Get()
             idx += [a - 1, c - 1, b - 1] if rev else [a - 1, b - 1, c - 1]
-        faces.append({"pos": pos, "idx": idx})
+        faces.append({"pos": [round(v, 5) for v in pos], "idx": idx, "type": ftype})
 
     edges = []
     emap = sub_map(shape, "edge")
@@ -556,3 +560,104 @@ def delete_faces(shape, face_ids: list[int]):
     if not algo.IsDone() or (hasattr(algo, "HasErrors") and algo.HasErrors()):
         raise GeometryError("면 삭제에 실패했습니다 — 주변 면으로 메울 수 없는 면입니다")
     return _single(algo.Shape())
+
+
+# ---------------------------------------------------------------- 다이렉트 편집(면 오프셋 기반)
+
+def offset_faces(shape, offsets: dict[int, float]):
+    """선택한 면만 각자의 바깥 법선 방향으로 거리만큼 옮기고 이웃 면을 늘리거나 줄여 맞춘다.
+
+    평면은 평행 이동, 원통/구면은 반지름이 바뀐다(구멍 지름 변경 등). 솔리드웍스의 면 이동,
+    퓨전의 Press Pull, 스페이스클레임의 Pull에 해당한다.
+    """
+    from OCP.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
+    from OCP.GeomAbs import GeomAbs_Intersection
+
+    if not offsets or all(abs(d) < 1e-9 for d in offsets.values()):
+        raise GeometryError("거리를 입력하세요")
+    mo = BRepOffset_MakeOffset()
+    mo.Initialize(shape, 0.0, 1e-6, BRepOffset_Skin, False, False, GeomAbs_Intersection, False, False)
+    for i, d in offsets.items():
+        mo.SetOffsetOnFace(sub_shape(shape, "face", i), d)
+    try:
+        mo.MakeOffsetShape()
+    except Exception as e:
+        raise GeometryError("면을 옮길 수 없습니다 — 거리를 줄이거나 다른 면을 고르세요") from e
+    if not mo.IsDone() or mo.Shape().IsNull():
+        raise GeometryError("면을 옮길 수 없습니다 — 거리를 줄이거나 다른 면을 고르세요")
+    res = _single(mo.Shape())
+    if mass_properties(res)["volume"] <= 1e-9:
+        raise GeometryError("면 이동 결과가 올바른 솔리드가 아닙니다")
+    return res
+
+
+def _cyl_info(shape, face_id):
+    face = sub_shape(shape, "face", face_id)
+    srf = BRepAdaptor_Surface(face)
+    if srf.GetType() != GeomAbs_Cylinder:
+        raise GeometryError("원통면(구멍이나 축의 안/바깥 면)을 선택하세요")
+    return srf.Cylinder().Radius()
+
+
+def set_diameter(shape, face_id: int, diameter: float):
+    """원통면(구멍 또는 보스)의 지름을 바꾼다."""
+    if diameter <= 0:
+        raise GeometryError("지름은 0보다 커야 합니다")
+    r0 = _cyl_info(shape, face_id)
+    delta = diameter / 2 - r0
+    if abs(delta) < 1e-9:
+        return shape
+    # 바깥 법선 방향이 구멍이면 축 쪽, 보스면 바깥쪽 — 한쪽으로 해 보고 결과로 판별한다
+    vol0 = mass_properties(shape)["volume"]
+    for sign in (1, -1):
+        try:
+            res = offset_faces(shape, {face_id: sign * delta})
+        except GeometryError:
+            continue
+        cyl = [describe(res, "face", i) for i in range(sub_map(res, "face").Extent())]
+        if any(d["type"] == "원통면" and abs(d["diameter"] - diameter) < 1e-6 for d in cyl) and \
+                abs(mass_properties(res)["volume"] - vol0) > 1e-9:
+            return res
+    raise GeometryError("지름을 바꿀 수 없습니다 — 주변 형상과 겹치는지 확인하세요")
+
+
+def set_face_distance(shape, move_face: int, ref_face: int, distance: float):
+    """평행한 두 평면 사이 거리를 지정값으로 만든다(move_face를 옮긴다)."""
+    a = _planar_face(shape, ref_face)
+    b = _planar_face(shape, move_face)
+    na, nb = face_normal(a), face_normal(b)
+    if not na.IsParallel(nb, 1e-6):
+        raise GeometryError("두 면이 평행하지 않습니다")
+    pa = describe(shape, "face", ref_face)["center"]
+    pb = describe(shape, "face", move_face)["center"]
+    v = gp_Vec(gp_Pnt(*pa), gp_Pnt(*pb))
+    nbv = gp_Vec(nb)
+    current = v.Dot(nbv)  # 이동 면 법선 방향으로 잰 부호 있는 거리
+    if abs(current) < 1e-9:
+        raise GeometryError("두 면이 같은 평면 위에 있습니다")
+    target = math.copysign(distance, current)
+    return offset_faces(shape, {move_face: target - current})
+
+
+# ---------------------------------------------------------------- 패턴
+
+def pattern_linear(shape, count: int, dx: float, dy: float, dz: float) -> list:
+    """원본을 제외한 복사본 count-1개."""
+    if count < 2:
+        raise GeometryError("개수는 2 이상이어야 합니다")
+    return [translate(shape, dx * k, dy * k, dz * k) for k in range(1, count)]
+
+
+def pattern_circular(shape, count: int, axis: str, total_angle: float, center) -> list:
+    if count < 2:
+        raise GeometryError("개수는 2 이상이어야 합니다")
+    step = total_angle / count if abs(total_angle - 360) < 1e-9 else total_angle / (count - 1)
+    return [rotate(shape, axis, step * k, center) for k in range(1, count)]
+
+
+def shape_hash(shape) -> int:
+    from OCP.TopTools import TopTools_ShapeMapHasher
+    try:
+        return TopTools_ShapeMapHasher()(shape)
+    except Exception:
+        return id(shape)

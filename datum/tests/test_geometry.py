@@ -113,7 +113,7 @@ def test_document_undo_redo(tmp_path):
     d.new()
     d.add_primitive("box", {"dx": 10, "dy": 10, "dz": 10})
     bid = d.bodies[0].id
-    d.replace(bid, g.scale(d.bodies[0].shape, 2), "scale")
+    d.replace_shape(bid, g.scale(d.bodies[0].shape, 2), "scale", "scale")
     assert g.mass_properties(d.bodies[0].shape)["volume"] == pytest.approx(8000)
     d.undo()
     assert g.mass_properties(d.bodies[0].shape)["volume"] == pytest.approx(1000)
@@ -123,3 +123,97 @@ def test_document_undo_redo(tmp_path):
     assert d.bodies == []
     with pytest.raises(g.GeometryError):
         d.undo()
+
+
+def test_offset_face_and_set_distance():
+    s = box(40, 40, 10)
+    top = find_face(s, [0, 0, 1])
+    r = g.offset_faces(s, {top: 5})
+    assert g.mass_properties(r)["size"][2] == pytest.approx(15)
+    bottom = find_face(s, [0, 0, -1])
+    r = g.set_face_distance(s, top, bottom, 25)
+    assert g.mass_properties(r)["size"][2] == pytest.approx(25)
+    r = g.set_face_distance(s, top, bottom, 4)
+    assert g.mass_properties(r)["size"][2] == pytest.approx(4)
+
+
+def test_set_hole_and_boss_diameter():
+    s = box(40, 40, 10)
+    h = g.hole(s, find_face(s, [0, 0, 1]), [20, 20, 10], 8)
+    cyl = [i for i in range(g.sub_map(h, "face").Extent()) if g.describe(h, "face", i)["type"] == "원통면"][0]
+    for d in (12, 5):
+        r = g.set_diameter(h, cyl, d)
+        assert g.mass_properties(r)["volume"] == pytest.approx(16000 - math.pi * (d / 2) ** 2 * 10, rel=1e-4)
+    c = g.make_primitive("cylinder", {"r": 10, "h": 20})
+    side = [i for i in range(g.sub_map(c, "face").Extent()) if g.describe(c, "face", i)["type"] == "원통면"][0]
+    r = g.set_diameter(c, side, 30)
+    assert g.mass_properties(r)["volume"] == pytest.approx(math.pi * 225 * 20, rel=1e-4)
+
+
+def test_patterns():
+    b = box(5, 5, 5)
+    assert len(g.pattern_linear(b, 4, 10, 0, 0)) == 3
+    copies = g.pattern_circular(b, 6, "z", 360, [0, 0, 0])
+    assert len(copies) == 5
+    assert g.mass_properties(copies[2])["center"][0] == pytest.approx(-2.5, abs=1e-6)
+
+
+def test_step_names_and_colors_roundtrip(tmp_path):
+    from core import stepio
+    p = tmp_path / "c.step"
+    stepio.write_step([
+        {"name": "베이스 플레이트", "shape": box(), "color": "#ff0000"},
+        {"name": "Pin", "shape": g.translate(g.make_primitive("cylinder", {"r": 2, "h": 9}), 50, 0, 0), "color": "#0080ff"},
+    ], str(p))
+    parts = stepio.read_step(str(p))
+    assert [x["name"] for x in parts] == ["베이스 플레이트", "Pin"]
+    assert [x["color"] for x in parts] == ["#ff0000", "#0080ff"]
+    assert g.mass_properties(parts[1]["shape"])["center"][0] == pytest.approx(50)
+
+
+def test_read_assembly_with_locations(tmp_path):
+    from OCP.STEPCAFControl import STEPCAFControl_Writer
+    from OCP.STEPControl import STEPControl_AsIs
+    from OCP.TCollection import TCollection_ExtendedString
+    from OCP.TDataStd import TDataStd_Name
+    from OCP.TopLoc import TopLoc_Location
+    from OCP.XCAFDoc import XCAFDoc_DocumentTool
+    from OCP.gp import gp_Trsf, gp_Vec
+    from core import stepio
+
+    doc = stepio._doc()
+    st = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    part = st.AddShape(box(10, 10, 10), False)
+    TDataStd_Name.Set_s(part, TCollection_ExtendedString("Cube", True))
+    asm = st.NewShape()
+    TDataStd_Name.Set_s(asm, TCollection_ExtendedString("ASM", True))
+    for x in (0, 100):
+        t = gp_Trsf()
+        t.SetTranslation(gp_Vec(x, 0, 0))
+        st.AddComponent(asm, part, TopLoc_Location(t))
+    st.UpdateAssemblies()
+    w = STEPCAFControl_Writer()
+    w.Transfer(doc, STEPControl_AsIs)
+    p = str(tmp_path / "asm.step")
+    w.Write(p)
+    parts = stepio.read_step(p)
+    assert [x["name"] for x in parts] == ["Cube", "Cube"]
+    xs = sorted(g.mass_properties(x["shape"])["center"][0] for x in parts)
+    assert xs == [pytest.approx(5), pytest.approx(105)]
+
+
+def test_document_goto_timeline():
+    d = Document()
+    d.new()
+    d.add_primitive("box", {"dx": 10, "dy": 10, "dz": 10})
+    bid = d.bodies[0].id
+    rev0 = d.bodies[0].rev
+    d.replace_shape(bid, g.scale(d.bodies[0].shape, 2), "크기", "scale")
+    d.replace_shape(bid, g.scale(d.bodies[0].shape, 2), "크기", "scale")
+    assert d.bodies[0].rev != rev0
+    d.goto(1)
+    assert g.mass_properties(d.bodies[0].shape)["volume"] == pytest.approx(1000)
+    assert d.bodies[0].rev == rev0
+    assert len(d.undone) == 2
+    d.goto(3)
+    assert g.mass_properties(d.bodies[0].shape)["volume"] == pytest.approx(64000)

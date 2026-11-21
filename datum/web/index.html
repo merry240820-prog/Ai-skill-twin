@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datum</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M4 18 12 4l8 14H4Z'/%3E%3Cpath d='M8.5 18 12 11.5 15.5 18'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+<script type="importmap">{ "imports": { "three": "/static/vendor/three.module.js" } }</script>
+</head>
+<body>
+<header id="top">
+  <div class="brand"><span id="logo"></span><b>Datum</b></div>
+  <div class="docname"><span id="docname">새 문서</span><span id="dirty" title="저장하지 않은 변경"></span></div>
+  <div class="spacer"></div>
+  <button class="ghost icon-btn" id="btn-undo" title="실행 취소 (Ctrl+Z)"></button>
+  <button class="ghost icon-btn" id="btn-redo" title="다시 실행 (Ctrl+Y)"></button>
+  <button class="search" id="btn-search" title="명령 검색"><span></span>명령 검색<kbd>S</kbd></button>
+  <button class="ghost icon-btn" id="btn-theme" title="밝게/어둡게"></button>
+  <button class="primary" id="btn-save"><span></span>STEP 저장</button>
+</header>
+
+<nav id="ribbon">
+  <div id="tabs" role="tablist"></div>
+  <div id="groups"></div>
+</nav>
+
+<main>
+  <aside id="browser">
+    <div class="pane-head">모델<span id="body-count"></span></div>
+    <ul id="bodies"></ul>
+    <div id="empty-hint">
+      <p><b>STEP 파일을 끌어다 놓거나</b><br>위 <em>파일 → 열기</em>로 시작하세요.</p>
+      <button class="primary" id="btn-sample">예제 파일 열기</button>
+    </div>
+  </aside>
+
+  <section id="viewport">
+    <div id="hud">
+      <div class="hud-group" id="hud-views"></div>
+      <div class="hud-sep"></div>
+      <div class="hud-group" id="hud-display"></div>
+    </div>
+    <div id="viewcube"></div>
+    <div id="filter" title="선택 필터"></div>
+    <div id="ctxbar" hidden></div>
+    <div id="drop">STEP 파일을 여기에 놓으세요<small>Shift를 누른 채 놓으면 현재 모델에 추가</small></div>
+    <div id="busy" hidden><i></i>계산 중</div>
+  </section>
+
+  <aside id="panel">
+    <div class="pane-head"><span id="panel-icon"></span><span id="panel-title">선택</span><button class="ghost icon-btn small" id="panel-close" title="닫기 (Esc)"></button></div>
+    <div id="panel-body"></div>
+  </aside>
+</main>
+
+<footer id="timeline-bar">
+  <div id="timeline" title="타임라인 — 클릭하면 그 시점으로 돌아갑니다"></div>
+  <div class="status">
+    <span id="status-sel"></span>
+    <button class="ghost chip" id="btn-units" title="표시 단위 전환">mm</button>
+  </div>
+</footer>
+
+<div id="palette" hidden>
+  <div class="palette-box">
+    <input id="palette-input" placeholder="명령 이름을 입력하세요 (예: 구멍, 필렛, 측정)" autocomplete="off">
+    <ul id="palette-list"></ul>
+  </div>
+</div>
+<div id="toasts"></div>
+<input type="file" id="file" accept=".step,.stp" hidden>
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>
