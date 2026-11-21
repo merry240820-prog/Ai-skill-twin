@@ -440,3 +440,116 @@ def export_dxf(doc: dict, path: str):
 
 def today():
     return date.today().isoformat()
+
+
+# ------------------------------------------------------------------ 단면도
+def _frame(view: str):
+    _, n, x = VIEWS[view]
+    n, x = gp_Dir(*n), gp_Dir(*x)
+    y = n.Crossed(x)
+    return n, x, y
+
+
+def _hatch(loops, spacing, angle=45.0):
+    """다각형 고리들(짝수/홀수 규칙) 안을 빗금으로 채운 선분 목록."""
+    a = math.radians(angle)
+    ca, sa = math.cos(a), math.sin(a)
+    rot = [[(px * ca + py * sa, -px * sa + py * ca) for px, py in lp] for lp in loops]
+    ys = [p[1] for lp in rot for p in lp]
+    if not ys:
+        return []
+    out = []
+    k0, k1 = math.floor(min(ys) / spacing), math.ceil(max(ys) / spacing)
+    for k in range(k0, k1 + 1):
+        yy = k * spacing + spacing * 0.5
+        xs = []
+        for lp in rot:
+            for i in range(len(lp)):
+                (x1, y1), (x2, y2) = lp[i], lp[(i + 1) % len(lp)]
+                if (y1 <= yy < y2) or (y2 <= yy < y1):
+                    xs.append(x1 + (yy - y1) * (x2 - x1) / (y2 - y1))
+        xs.sort()
+        for j in range(0, len(xs) - 1, 2):
+            p, q = (xs[j], yy), (xs[j + 1], yy)
+            back = lambda u: (u[0] * ca - u[1] * sa, u[0] * sa + u[1] * ca)  # noqa: E731
+            P, Q = back(p), back(q)
+            out.append({"t": "line", "p": [_r(P[0]), _r(P[1]), _r(Q[0]), _r(Q[1])]})
+    return out
+
+
+def section_view(shape, parent: str, orient: str, pos: float, flip: bool, spacing: float, label: str = "A") -> dict:
+    """부모 뷰 위의 절단선(orient 'h'=수평선 y=pos, 'v'=수직선 x=pos)으로 자른 단면도.
+
+    화살표 방향(보는 쪽)은 flip으로 바꾼다. 결과 좌표는 단면도 자체의 2D 투상 좌표.
+    """
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeHalfSpace
+    from OCP.gp import gp_Pln
+
+    if parent not in ("front", "top", "right", "left", "bottom", "back"):
+        raise g.GeometryError("단면은 정면·평면·측면도에서만 만들 수 있습니다")
+    pn, px, py = _frame(parent)
+    # 절단면: 수평선이면 법선 = 부모 Y, 수직선이면 법선 = 부모 X
+    cut_n = py if orient == "h" else px
+    sign = -1 if flip else 1
+    look = gp_Dir(cut_n.X() * sign, cut_n.Y() * sign, cut_n.Z() * sign)  # 단면도의 관찰자 방향
+    origin = gp_Pnt(cut_n.X() * pos, cut_n.Y() * pos, cut_n.Z() * pos)
+    # 관찰자 반대편(look의 반대쪽) 부분만 남긴다
+    far = gp_Pnt(origin.X() - look.X() * 1e5, origin.Y() - look.Y() * 1e5, origin.Z() - look.Z() * 1e5)
+    half = BRepPrimAPI_MakeHalfSpace(BRepBuilderAPI_MakeFace(gp_Pln(origin, look)).Face(), far).Solid()
+    op = BRepAlgoAPI_Common(shape, half)
+    op.Build()
+    if not op.IsDone() or g.mass_properties(op.Shape())["volume"] < 1e-9:
+        raise g.GeometryError("절단선이 부품을 지나지 않습니다")
+    cut = op.Shape()
+    # 단면도는 똑바로 선 모양으로: 화면 위 = 세계 Z(관찰 방향과 평행하면 Y), 화면 X = 위 × 관찰 방향
+    up = gp_Dir(0, 0, 1) if abs(look.Z()) < 0.99 else gp_Dir(0, 1, 0)
+    sx = up.Crossed(look)
+    name = f"단면 {label}-{label}"
+    VIEWS["_sec"] = (name, (look.X(), look.Y(), look.Z()), (sx.X(), sx.Y(), sx.Z()))
+    v = project(cut, "_sec", hidden=False)
+    del VIEWS["_sec"]
+    # 절단면 위의 면들 → 빗금
+    sy = look.Crossed(sx)
+    loops = []
+    exp_faces = g.sub_map(cut, "face")
+    for i in range(exp_faces.Extent()):
+        d = g.describe(cut, "face", i)
+        if d["type"] != "평면":
+            continue
+        nn = d["normal"]
+        if abs(abs(nn[0] * look.X() + nn[1] * look.Y() + nn[2] * look.Z()) - 1) > 1e-6:
+            continue
+        c = d["center"]
+        if abs((c[0] - origin.X()) * look.X() + (c[1] - origin.Y()) * look.Y() + (c[2] - origin.Z()) * look.Z()) > 1e-5:
+            continue
+        face = g.sub_shape(cut, "face", i)
+        from OCP.TopAbs import TopAbs_REVERSED, TopAbs_WIRE
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.BRepTools import BRepTools_WireExplorer
+        we = TopExp_Explorer(face, TopAbs_WIRE)
+        while we.More():
+            wire = we.Current()
+            pts = []
+            wx = BRepTools_WireExplorer(g._cast_wire(wire))
+            while wx.More():
+                c_ = BRepAdaptor_Curve(wx.Current())
+                disc = GCPnts_TangentialDeflection(c_, 0.1, max(spacing * 0.05, 1e-3))
+                seq = [disc.Value(k) for k in range(1, disc.NbPoints() + 1)]
+                if wx.Current().Orientation() == TopAbs_REVERSED:
+                    seq.reverse()
+                for p in seq[:-1]:
+                    pts.append((p.X() * sx.X() + p.Y() * sx.Y() + p.Z() * sx.Z(), p.X() * sy.X() + p.Y() * sy.Y() + p.Z() * sy.Z()))
+                wx.Next()
+            if len(pts) >= 3:
+                loops.append(pts)
+            we.Next()
+    v["hatch"] = _hatch(loops, spacing) if loops else []
+    v["id"] = f"sec{label}"
+    v["name"] = name
+    v["kind"] = "section"
+    v["label"] = label
+    v["parent"] = parent
+    v["cut"] = {"orient": orient, "pos": pos, "flip": flip}
+    return v

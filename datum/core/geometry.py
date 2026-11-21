@@ -55,7 +55,8 @@ from OCP.gp import gp_Ax1, gp_Ax2, gp_Dir, gp_GTrsf, gp_Pnt, gp_Trsf, gp_Vec
 
 
 # OCP 7.x는 TopoDS.Face_s, 8.x는 TopoDS.Face — 두 버전 모두 지원
-_cast = {k: getattr(TopoDS, k, None) or getattr(TopoDS, k + "_s") for k in ("Face", "Edge", "Vertex")}
+_cast = {k: getattr(TopoDS, k, None) or getattr(TopoDS, k + "_s") for k in ("Face", "Edge", "Vertex", "Wire")}
+_cast_wire = _cast["Wire"]
 
 
 class GeometryError(Exception):

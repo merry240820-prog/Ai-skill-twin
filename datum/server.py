@@ -23,12 +23,12 @@ from pydantic import BaseModel
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core import geometry as g  # noqa: E402
 from core import stepio  # noqa: E402
-from core import assembly, drawing, fea  # noqa: E402
+from core import assembly, drawing, fea, sketch  # noqa: E402
 from core.geometry import make_compound  # noqa: E402
 from core.document import Document  # noqa: E402
 
 APP_NAME = "Datum"
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI(title=APP_NAME, version=VERSION)
 doc = Document()
@@ -251,6 +251,26 @@ def make_drawing(req: DrawReq):
     return d
 
 
+class SectionReq(BaseModel):
+    bodies: list[int] | None = None
+    parent: str
+    orient: str  # 'h' | 'v'
+    pos: float
+    flip: bool = False
+    spacing: float = 1.5  # 빗금 간격(모델 mm)
+    label: str = "A"
+
+
+@app.post("/api/drawing/section")
+def drawing_section(req: SectionReq):
+    with lock:
+        bodies = [b for b in doc.bodies if (b.id in req.bodies if req.bodies else b.visible)]
+        if not bodies:
+            raise g.GeometryError("도면으로 만들 바디가 없습니다")
+        shape = bodies[0].shape if len(bodies) == 1 else make_compound([b.shape for b in bodies])
+    return drawing.section_view(shape, req.parent, req.orient, req.pos, req.flip, req.spacing, req.label)
+
+
 class ExportReq(BaseModel):
     sheet: dict
     prims: list[dict]
@@ -264,6 +284,85 @@ def export_drawing(fmt: str, req: ExportReq):
     fn = drawing.export_pdf if fmt == "pdf" else drawing.export_dxf
     data = _tmp_export(lambda p: fn(req.model_dump(), p), "." + fmt)
     return _download(data, f"{req.title}.{fmt}", "application/pdf" if fmt == "pdf" else "image/vnd.dxf")
+
+
+# ---------------------------------------------------------------- 스케치
+class SketchPlaneReq(BaseModel):
+    body: int | None = None
+    face: int | None = None
+    base: str | None = None  # 'xy' | 'xz' | 'yz'
+
+
+@app.post("/api/sketch/plane")
+def sketch_plane(req: SketchPlaneReq):
+    with lock:
+        if req.body is not None and req.face is not None:
+            pl = sketch.plane_from_face(doc.body(req.body).shape, req.face)
+            pl["body"] = req.body
+            return pl
+    return sketch.base_plane(req.base or "xy")
+
+
+# ---------------------------------------------------------------- 부품 끌기(메이트를 지키며)
+drag_state: dict = {}
+
+
+def _trsf(m: list[float]):
+    from OCP.gp import gp_Trsf
+    t = gp_Trsf()
+    t.SetValues(*m)  # 3×4 행 우선
+    return t
+
+
+def _mat(t) -> list[float]:
+    return [t.Value(r, c) for r in (1, 2, 3) for c in (1, 2, 3, 4)]
+
+
+class DragReq(BaseModel):
+    body: int
+    matrix: list[float]  # 끌기 시작 위치 기준 3×4 변환
+
+
+def _drag_solve(req: DragReq):
+    from OCP.TopLoc import TopLoc_Location
+    start = drag_state.get("start")
+    if not start or drag_state.get("body") != req.body or drag_state.get("rev") != doc.revision:
+        start = {b.id: b.shape for b in doc.bodies}
+        drag_state.update(start=start, body=req.body, rev=doc.revision)
+    b = doc.body(req.body)
+    if b.fixed:
+        raise g.GeometryError(f"'{b.name}'은(는) 고정 부품입니다 — 고정을 해제하면 움직일 수 있습니다")
+    shapes = dict(start)
+    shapes[req.body] = start[req.body].Moved(TopLoc_Location(_trsf(req.matrix)))
+    live = [m for m in doc.mates if m["ref"]["body"] in shapes and m["mov"]["body"] in shapes]
+    if live:
+        # 끄는 부품은 잠시 '기준'으로 두고 나머지를 맞춘 뒤, 끄는 부품 자신도 메이트에 맞춘다
+        assembly.solve(live, shapes, {x.id for x in doc.bodies if x.fixed})
+    out = {}
+    for bid, sh in shapes.items():
+        if sh is start[bid]:
+            continue
+        rel = sh.Location().Transformation().Multiplied(start[bid].Location().Transformation().Inverted())
+        out[bid] = _mat(rel)
+    return shapes, out
+
+
+@app.post("/api/drag/preview")
+def drag_preview(req: DragReq):
+    with lock:
+        _, out = _drag_solve(req)
+    return {"moves": out}
+
+
+@app.post("/api/drag/commit")
+def drag_commit(req: DragReq):
+    with lock:
+        shapes, out = _drag_solve(req)
+        for bid in out:
+            doc.body(bid).set_shape(shapes[bid])
+        drag_state.clear()
+        doc.commit(f"부품 끌기 · {doc.body(req.body).name}", "move")
+    return state()
 
 
 # ---------------------------------------------------------------- 편집
@@ -354,6 +453,22 @@ def operation(o: Op):
             doc.set_fixed(o.body, bool(p.get("fixed", True)))
         elif o.op == "rebuild":
             doc.rebuild()
+        elif o.op == "sketch_extrude":
+            pl, ents = p["plane"], p["entities"]
+            target = doc.body(o.body) if o.body is not None else None
+            mode = p.get("mode", "boss")
+            if target is None and mode != "new":
+                mode = "new"
+            new = sketch.extrude(target.shape if target else None, pl, ents, float(p.get("depth", 10)), mode,
+                                 bool(p.get("reverse")), bool(p.get("through")), bool(p.get("both")))
+            label = {"boss": "스케치 돌출", "cut": "스케치 컷", "new": "스케치 새 바디"}[mode]
+            if mode == "new":
+                from core.document import Body, PALETTE
+                n = sum(1 for b in doc.bodies if b.name.startswith("스케치 바디")) + 1
+                doc.bodies.append(Body(f"스케치 바디{n}", new, PALETTE[len(doc.bodies) % len(PALETTE)]))
+                doc.commit(label, "sketch")
+            else:
+                doc.replace_shape(target.id, new, label, "sketch")
         else:
             new, label, kind = _shape_op(o)
             doc.replace_shape(o.body, new, label, kind)

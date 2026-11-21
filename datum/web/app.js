@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from '/static/vendor/OrbitControls.js';
 import { icon, KIND_ICON } from '/static/icons.js';
 import { createDrawing } from '/static/drawing.js';
+import { createSketch } from '/static/sketch.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -434,6 +435,89 @@ renderer.domElement.addEventListener('pointerleave', () => { hover = null; clear
 renderer.domElement.addEventListener('dblclick', () => fitView());
 controls.addEventListener('start', hideCtx);
 
+// =============================================================== 부품 끌기(솔리드웍스: 왼쪽 드래그 이동, Shift+드래그 회전)
+let cdrag = null;
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || e.altKey || (activeTool && activeTool !== TOOLS.select && activeTool !== TOOLS.measure)) return;
+  if (state.bodies.length < 2) return; // 부품이 여러 개(어셈블리)일 때만
+  const hit = pick(e);
+  if (!hit) return;
+  const b = state.bodies.find((x) => x.id === hit.body);
+  if (!b) return;
+  const n = camera.getWorldDirection(new THREE.Vector3());
+  const center = new THREE.Box3().setFromObject(views.get(b.id).mesh).getCenter(new THREE.Vector3());
+  cdrag = { body: b.id, fixed: b.fixed, x: e.clientX, y: e.clientY, active: false, rotate: e.shiftKey,
+    plane: new THREE.Plane().setFromNormalAndCoplanarPoint(n, new THREE.Vector3(...hit.point)), from: new THREE.Vector3(...hit.point),
+    center, axis: n.clone().negate(), matrix: null, busy: false, queued: null };
+});
+function dragMatrix(e) {
+  if (cdrag.rotate) {
+    const ang = THREE.MathUtils.degToRad((e.clientX - cdrag.x) * 0.5);
+    const m = new THREE.Matrix4().makeTranslation(cdrag.center.x, cdrag.center.y, cdrag.center.z)
+      .multiply(new THREE.Matrix4().makeRotationAxis(cdrag.axis, ang))
+      .multiply(new THREE.Matrix4().makeTranslation(-cdrag.center.x, -cdrag.center.y, -cdrag.center.z));
+    return m;
+  }
+  const r = renderer.domElement.getBoundingClientRect();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+  const p = ray.ray.intersectPlane(cdrag.plane, new THREE.Vector3());
+  if (!p) return null;
+  const d = p.sub(cdrag.from);
+  return new THREE.Matrix4().makeTranslation(d.x, d.y, d.z);
+}
+const rows = (m) => { const a = m.elements; return [a[0], a[4], a[8], a[12], a[1], a[5], a[9], a[13], a[2], a[6], a[10], a[14]]; };
+function applyMoves(moves) {
+  const none = !Object.keys(moves).length;
+  views.forEach((v, id) => {
+    if (none) { v.group.matrixAutoUpdate = true; v.group.updateMatrix(); return; }
+    const m = moves[id];
+    v.group.matrixAutoUpdate = false;
+    v.group.matrix.identity();
+    if (m) v.group.matrix.set(m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], 0, 0, 0, 1);
+    v.group.matrixWorldNeedsUpdate = true;
+  });
+}
+async function sendPreview() {
+  if (!cdrag || cdrag.busy || !cdrag.queued) return;
+  cdrag.busy = true;
+  const m = cdrag.queued;
+  cdrag.queued = null;
+  try {
+    const r = await post('/api/drag/preview', { body: cdrag.body, matrix: m });
+    if (cdrag?.active) applyMoves(r.moves);
+  } catch (err) { toast(err.message, true); cdrag = null; applyMoves({}); controls.enabled = true; return; }
+  if (cdrag) { cdrag.busy = false; if (cdrag.queued) sendPreview(); }
+}
+window.addEventListener('pointermove', (e) => {
+  if (!cdrag) return;
+  if (!cdrag.active) {
+    if (Math.hypot(e.clientX - cdrag.x, e.clientY - cdrag.y) < 5) return;
+    if (cdrag.fixed) { toast(`고정 부품은 끌 수 없습니다 — 어셈블리 › 고정/해제`, true); cdrag = null; return; }
+    cdrag.active = true;
+    controls.enabled = false;
+    hideCtx();
+    renderer.domElement.style.cursor = cdrag.rotate ? 'ew-resize' : 'grabbing';
+  }
+  const m = dragMatrix(e);
+  if (!m) return;
+  cdrag.matrix = rows(m);
+  cdrag.queued = cdrag.matrix;
+  sendPreview();
+});
+window.addEventListener('pointerup', () => {
+  if (!cdrag) return;
+  const d = cdrag;
+  cdrag = null;
+  controls.enabled = true;
+  renderer.domElement.style.cursor = 'default';
+  if (!d.active || !d.matrix) return;
+  downAt = null; // 선택 클릭으로 처리하지 않음
+  safe(async () => {
+    const s = await post('/api/drag/commit', { body: d.body, matrix: d.matrix });
+    await applyState(s);
+  }).finally(() => applyMoves({}));
+}, true);
+
 // =============================================================== 상황별 툴바(선택 근처에 뜨는 버튼)
 function showCtx(hit) {
   const items = [];
@@ -442,7 +526,7 @@ function showCtx(hit) {
   if (hit.kind === 'face') {
     if (hit.ftype === 'cylinder') items.push('diameter');
     items.push('offset');
-    if (hit.ftype === 'plane') items.push('push_pull', 'hole');
+    if (hit.ftype === 'plane') items.push('sketch', 'push_pull', 'hole');
     items.push('delete_faces');
   } else if (hit.kind === 'edge') items.push('fillet', 'chamfer');
   items.push('measure');
@@ -1384,6 +1468,12 @@ const ACT = {
     renderer.render(scene, camera);
     renderer.domElement.toBlob((b) => saveBlob(b, `${stem()}.png`), 'image/png');
   },
+  sketch: () => safe(async () => {
+    const f = selection.find((x) => x.kind === 'face' && x.ftype === 'plane');
+    setTool(null);
+    await sketchMode.open(f ? { body: f.body, face: f.index } : { base: 'xy' });
+    if (!f) toast('평면을 고르지 않아 XY 기준면에 그립니다 — 부품 면에 그리려면 평면을 먼저 클릭하세요');
+  }),
   drawing: () => safe(async () => {
     if (!state.bodies.some((b) => b.visible)) throw new Error('도면으로 만들 부품이 없습니다 — STEP을 먼저 여세요');
     setTool(null);
@@ -1423,6 +1513,7 @@ const RIBBON = [
     { name: '내보내기', items: [['save', 'STEP 저장', 'save', 'Ctrl+S', ACT.save], ['stl', 'STL', 'stl', null, ACT.stl], ['png', '화면 PNG', 'image', null, ACT.png]] },
   ] },
   { tab: '직접 편집', groups: [
+    { name: '스케치', items: [['sketch', '스케치', 'sketch', 'K', () => ACT.sketch()]] },
     { name: '면', items: [['offset', '면 이동', 'offset', 'O'], ['distance', '거리 지정', 'distance', 'D'], ['diameter', '지름 변경', 'diameter'], ['delete_faces', '면 삭제', 'deleteFace', 'Del']] },
     { name: '피처', items: [['push_pull', '돌출/컷', 'extrude', 'E'], ['hole', '구멍', 'hole', 'H'], ['fillet', '필렛', 'fillet', 'R'], ['chamfer', '챔퍼', 'chamfer', 'C'], ['shell', '쉘', 'shell']] },
     { name: '바디', items: [['primitive', '기본 형상', 'box'], ['boolean', '결합', 'union', 'B'], ['pattern', '패턴', 'pattern', 'P']] },
@@ -1557,6 +1648,12 @@ async function download(url, ext) {
   if (ok && ext === 'step') $('#dirty').classList.remove('on');
 }
 
+const sketchMode = createSketch({
+  post, toast, icon, fmt,
+  onApply: (payload) => runOp(payload),
+  onClose: () => { resize(); },
+});
+
 const drawingMode = createDrawing({
   api, post, toast, icon, fmt, saveBlob,
   getDocName: () => stem(),
@@ -1569,7 +1666,7 @@ const drawingMode = createDrawing({
 let lastMouse = [innerWidth / 2, innerHeight / 2];
 window.addEventListener('pointermove', (e) => { lastMouse = [e.clientX, e.clientY]; });
 window.addEventListener('keydown', (e) => {
-  if (!$('#palette').hidden || drawingMode.isOpen()) return;
+  if (!$('#palette').hidden || drawingMode.isOpen() || sketchMode.isOpen()) return;
   if (e.target.matches('input, select, textarea')) { if (e.key === 'Escape') e.target.blur(); return; }
   const k = e.key.toLowerCase();
   const mod = e.ctrlKey || e.metaKey;

@@ -1,6 +1,6 @@
 ; Datum 설치 프로그램 (Inno Setup 6) — 내 PC 사용자 계정에만 설치(관리자 권한 불필요)
 #define AppName "Datum"
-#define AppVersion "0.4.0"
+#define AppVersion "0.5.0"
 
 [Setup]
 AppId={{5B3C8A1E-7C2D-4E59-9C0B-DA7A0D1A7E11}

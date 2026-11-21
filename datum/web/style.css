@@ -270,3 +270,31 @@ main { position: relative; }
 .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12.5px; }
 .checks label { display: flex; align-items: center; gap: 6px; }
 body.drawing-mode #timeline-bar { opacity: .5; pointer-events: none; }
+
+/* ---------- 스케치 (v0.5) */
+#sketch { position: absolute; inset: 0; z-index: 10; display: grid; grid-template-columns: 1fr 300px; background: var(--bg); }
+#sketch[hidden] { display: none !important; }
+#sk-svg { width: 100%; height: 100%; display: block; user-select: none; background: var(--view-top); }
+#sk-svg .g1 { stroke: var(--line); stroke-width: .6; }
+#sk-svg .g2 { stroke: var(--line-strong); stroke-width: .8; }
+#sk-svg .ax-x { stroke: #dc2626; stroke-width: 1.5; }
+#sk-svg .ax-y { stroke: #16a34a; stroke-width: 1.5; }
+#sk-svg .org { fill: var(--ink-2); }
+#sk-svg .ref { fill: none; stroke: var(--ink-3); stroke-width: 1.2; stroke-dasharray: 5 3; }
+#sk-svg .ent { fill: none; stroke: var(--accent); stroke-width: 2; cursor: pointer; }
+#sk-svg .ent.sel { stroke: #f97316; stroke-width: 2.6; }
+#sk-svg .ent.pv { stroke-dasharray: 6 4; opacity: .8; }
+#sk-svg .pick { fill: var(--accent); }
+#sk-svg .snap { fill: none; stroke: #f97316; stroke-width: 1.5; }
+#sk-svg .snap.on { fill: rgba(249,115,22,.25); }
+#sk-svg text { font: 600 12px var(--mono); fill: var(--ink); paint-order: stroke; stroke: var(--view-top); stroke-width: 4px; }
+#sk-svg text.dim { fill: var(--accent); cursor: pointer; }
+#sk-svg text.dim:hover { fill: #f97316; }
+#sk-svg text.infer { fill: #f97316; font-size: 11px; }
+.seg button:disabled { opacity: .35; cursor: default; }
+#d-svg .vsel { fill: none; stroke: var(--accent); stroke-width: .4; stroke-dasharray: 2 1.5; }
+.gdt-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.gdt-grid button { height: 32px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface-2); }
+.gdt-grid button.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.dat3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.dat3 input { width: 100%; text-align: center; }

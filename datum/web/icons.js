@@ -62,6 +62,15 @@ const P = {
   select: '<path d="M5 3l14 7-6 2-2 6z"/>',
   note: '<path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/>',
   drawing: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M13 15h7M13 15v5"/><path d="M6 8h5v5H6z"/><path d="M6 16h4" stroke-dasharray="1.5 1.5"/>',
+  sketch: '<path d="M4 20h16"/><path d="m6 16 9-9 3 3-9 9H6z"/><path d="m13 9 3 3"/>',
+  rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
+  circle: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  arc: '<path d="M4 18a8 8 0 0 1 16 0"/><circle cx="12" cy="18" r="1" fill="currentColor"/>',
+  section2: '<path d="M4 12h16" stroke-dasharray="5 2 1 2"/><path d="M6 6v6M18 6v6"/><path d="m4 8 2-2 2 2M16 8l2-2 2 2"/>',
+  detail: '<circle cx="9" cy="10" r="5"/><circle cx="17" cy="16" r="4"/><path d="m12.5 13.5 1.5 1"/>',
+  gdt: '<rect x="2" y="8" width="20" height="8" rx="1"/><path d="M8 8v8M15 8v8"/><circle cx="5" cy="12" r="1.6"/>',
+  datum: '<rect x="8" y="3" width="8" height="8" rx="1"/><path d="M12 11v5"/><path d="M8 21l4-5 4 5z" fill="currentColor"/>',
+  rough: '<path d="M3 14l3 6 6-16h9"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
 };
 

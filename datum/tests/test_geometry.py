@@ -327,3 +327,26 @@ def test_drawing_views_dims_and_exports(tmp_path):
     import ezdxf
     msp = ezdxf.readfile(str(tmp_path / "a.dxf")).modelspace()
     assert {e.dxftype() for e in msp} >= {"LINE", "CIRCLE", "ARC", "TEXT"}
+
+
+def test_sketch_extrude_boss_cut_and_holes():
+    from core import sketch
+    s = box(40, 40, 10)
+    pl = sketch.plane_from_face(s, find_face(s, [0, 0, 1]))
+    assert pl["origin"] == pytest.approx([0, 0, 10]) and pl["n"] == pytest.approx([0, 0, 1])
+    # 사각형 안에 원 → 링 모양 보스(원은 구멍)
+    ents = [{"t": "rect", "x": 10, "y": 10, "w": 20, "h": 20}, {"t": "circle", "c": [20, 20], "r": 5}]
+    r = sketch.extrude(s, pl, ents, 5, "boss")
+    assert g.mass_properties(r)["volume"] == pytest.approx(16000 + (400 - math.pi * 25) * 5, rel=1e-6)
+    # 선 3개로 닫은 삼각형 컷(기본 방향: 면 안쪽)
+    tri = [{"t": "line", "p": [5, 5, 15, 5]}, {"t": "line", "p": [15, 5, 5, 15]}, {"t": "line", "p": [5, 15, 5, 5]}]
+    r = sketch.extrude(s, pl, tri, 4, "cut")
+    assert g.mass_properties(r)["volume"] == pytest.approx(16000 - 50 * 4, rel=1e-6)
+    r = sketch.extrude(s, pl, tri, 0, "cut", through=True)
+    assert g.mass_properties(r)["volume"] == pytest.approx(16000 - 50 * 10, rel=1e-6)
+    # 호 + 선으로 닫은 반원(D자) 새 바디
+    d = [{"t": "arc", "c": [0, 0], "r": 10, "a0": 0, "a1": 180}, {"t": "line", "p": [-10, 0, 10, 0]}]
+    nb = sketch.extrude(None, sketch.base_plane("xy"), d, 2, "new")
+    assert g.mass_properties(nb)["volume"] == pytest.approx(math.pi * 100 / 2 * 2, rel=1e-4)
+    with pytest.raises(g.GeometryError):
+        sketch.extrude(s, pl, [{"t": "line", "p": [0, 0, 5, 5]}], 3, "boss")
