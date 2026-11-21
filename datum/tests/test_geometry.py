@@ -217,3 +217,79 @@ def test_document_goto_timeline():
     assert len(d.undone) == 2
     d.goto(3)
     assert g.mass_properties(d.bodies[0].shape)["volume"] == pytest.approx(64000)
+
+
+def test_cantilever_matches_beam_theory():
+    from core import fea
+    s = box(100, 10, 10)
+    fixed, tip = find_face(s, [-1, 0, 0]), find_face(s, [1, 0, 0])
+    r = fea.static_analysis(s, [fixed], [{"faces": [tip], "type": "force", "value": 100, "dir": "-z"}],
+                            {"E": 210000, "nu": 0.3, "yield": 275}, "coarse")
+    # 오일러-베르누이: δ = FL³/(3EI) = 0.1905 mm, σ = M c / I = 60 MPa
+    assert r["max_disp"] == pytest.approx(0.1905, rel=0.03)
+    assert r["max_vm"] == pytest.approx(60, rel=0.1)
+    assert r["fos"] == pytest.approx(275 / r["max_vm"])
+    assert r["applied_force"] == pytest.approx([0, 0, -100], abs=1e-6)
+
+
+def test_pressure_load_direction_on_concave_part():
+    from core import fea
+    # L자(오목) 형상에서도 '법선' 압력이 면을 누르는 방향인지
+    s = g.boolean("union", box(60, 10, 10), box(10, 10, 40))
+    top = [i for i in range(g.sub_map(s, "face").Extent()) if g.describe(s, "face", i).get("normal") == [0, 0, 1]
+           and g.describe(s, "face", i)["center"][0] > 20][0]
+    left = find_face(s, [-1, 0, 0])
+    r = fea.static_analysis(s, [left], [{"faces": [top], "type": "pressure", "value": 1, "dir": "normal"}],
+                            {"E": 210000, "nu": 0.3}, "coarse")
+    assert r["applied_force"][2] == pytest.approx(-500, rel=1e-6)
+
+
+def test_mates_coincident_and_concentric():
+    from core import assembly
+    plate = g.hole(box(40, 40, 10), find_face(box(40, 40, 10), [0, 0, 1]), [20, 20, 10], 10)
+    pin = g.rotate(g.translate(g.make_primitive("cylinder", {"r": 5, "h": 30}), 100, 50, 7), "x", 33)
+    hole_face = [i for i in range(g.sub_map(plate, "face").Extent()) if g.describe(plate, "face", i)["type"] == "원통면"][0]
+    pin_side = [i for i in range(g.sub_map(pin, "face").Extent()) if g.describe(pin, "face", i)["type"] == "원통면"][0]
+    pin_bottom = [i for i in range(g.sub_map(pin, "face").Extent())
+                  if g.describe(pin, "face", i)["type"] == "평면"][0]
+    plate_top = find_face(plate, [0, 0, 1])
+    mates = [
+        {"id": 1, "type": "concentric", "ref": {"body": 1, "kind": "face", "index": hole_face}, "mov": {"body": 2, "kind": "face", "index": pin_side}},
+        {"id": 2, "type": "distance", "offset": 5, "aligned": True, "ref": {"body": 1, "kind": "face", "index": plate_top}, "mov": {"body": 2, "kind": "face", "index": pin_bottom}},
+    ]
+    shapes = {1: plate, 2: pin}
+    res = assembly.solve(mates, shapes, fixed={1})
+    assert max(res.values()) < 1e-6
+    d = g.describe(shapes[2], "face", pin_side)
+    assert d["axis_point"][0] == pytest.approx(20, abs=1e-6) and d["axis_point"][1] == pytest.approx(20, abs=1e-6)
+    assert abs(d["axis"][2]) == pytest.approx(1, abs=1e-9)
+    assert shapes[1] is plate  # 고정 부품은 그대로
+    assert g.describe(shapes[2], "face", pin_bottom)["center"][2] == pytest.approx(15, abs=1e-6)
+
+
+def test_interference():
+    from core import assembly
+    hits = assembly.interference([(1, "a", box(10, 10, 10)), (2, "b", g.translate(box(10, 10, 10), 5, 0, 0)),
+                                  (3, "c", g.translate(box(10, 10, 10), 50, 0, 0))])
+    assert len(hits) == 1 and hits[0]["volume"] == pytest.approx(500)
+
+
+def test_document_mates_undo_and_fixed():
+    d = Document()
+    d.new()
+    d.add_primitive("box", {"dx": 40, "dy": 40, "dz": 10})
+    d.add_primitive("box", {"dx": 10, "dy": 10, "dz": 10, "x": 100, "y": 100, "z": 50})
+    a, b = d.bodies
+    d.set_fixed(a.id, True)
+    top = find_face(a.shape, [0, 0, 1])
+    bottom = find_face(b.shape, [0, 0, -1])
+    d.add_mate("coincident", {"body": a.id, "kind": "face", "index": top}, {"body": b.id, "kind": "face", "index": bottom})
+    assert g.mass_properties(d.body(b.id).shape)["bbox_min"][2] == pytest.approx(10)
+    assert d.mate_list()[0]["ok"]
+    # 메이트가 있는 부품을 옮겨도 재생성하면 다시 붙는다
+    d.replace_shape(b.id, g.translate(d.body(b.id).shape, 0, 0, 30), "이동", "move")
+    assert g.mass_properties(d.body(b.id).shape)["bbox_min"][2] == pytest.approx(10)
+    assert g.mass_properties(d.body(b.id).shape)["bbox_min"][0] == pytest.approx(100)  # 평면 메이트라 X는 자유
+    d.undo(); d.undo()
+    assert d.mates == []
+    assert g.mass_properties(d.body(b.id).shape)["bbox_min"][2] == pytest.approx(50)

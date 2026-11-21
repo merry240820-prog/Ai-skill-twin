@@ -23,10 +23,11 @@ from pydantic import BaseModel
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core import geometry as g  # noqa: E402
 from core import stepio  # noqa: E402
+from core import assembly, fea  # noqa: E402
 from core.document import Document  # noqa: E402
 
 APP_NAME = "Datum"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI(title=APP_NAME, version=VERSION)
 doc = Document()
@@ -46,8 +47,9 @@ def state() -> dict:
         "app": APP_NAME, "version": VERSION,
         "name": doc.name, "revision": doc.revision,
         "history": done, "redo": redo,
-        "bodies": [{"id": b.id, "rev": b.rev, "name": b.name, "color": b.color, "visible": b.visible}
+        "bodies": [{"id": b.id, "rev": b.rev, "name": b.name, "color": b.color, "visible": b.visible, "fixed": b.fixed}
                    for b in doc.bodies],
+        "mates": doc.mate_list(),
     }
 
 
@@ -58,9 +60,11 @@ def get_state():
 
 
 @app.get("/api/mesh/{body_id}")
-def get_mesh(body_id: int, quality: float = 1.0):
+def get_mesh(body_id: int, quality: float = 1.0, rev: int = 0):
     with lock:
         b = doc.body(body_id)
+        if rev and rev != b.rev:
+            raise HTTPException(409, "형상이 바뀌었습니다 — 다시 불러오세요")
         key = (b.id, b.rev, quality)
         if key not in mesh_cache:
             mesh_cache[key] = g.tessellate(b.shape, quality)
@@ -192,6 +196,37 @@ def mass(body_id: int, density: float = 7.85):
         return g.mass_properties(doc.body(body_id).shape, density * 1e-3)
 
 
+# ---------------------------------------------------------------- 어셈블리 · 시뮬레이션
+@app.get("/api/interference")
+def interference():
+    with lock:
+        bodies = [(b.id, b.name, b.shape) for b in doc.bodies if b.visible]
+    return {"hits": assembly.interference(bodies)}
+
+
+@app.get("/api/materials")
+def materials():
+    return [{"key": k, "name": v[0], "E": v[1], "nu": v[2], "yield": v[3], "density": v[4]} for k, v in fea.MATERIALS.items()]
+
+
+class SimReq(BaseModel):
+    body: int
+    fixed: list[int]
+    loads: list[dict]
+    material: dict
+    density: str = "normal"
+
+
+@app.post("/api/sim/static")
+def simulate(req: SimReq):
+    with lock:
+        b = doc.body(req.body)
+        shape, rev = b.shape, b.rev
+    result = fea.static_analysis(shape, req.fixed, req.loads, req.material, req.density)  # 무거운 계산은 잠금 밖에서
+    result["body"], result["rev"] = req.body, rev
+    return result
+
+
 # ---------------------------------------------------------------- 편집
 class Op(BaseModel):
     op: str
@@ -269,6 +304,17 @@ def operation(o: Op):
             doc.redo()
         elif o.op == "goto":
             doc.goto(int(p["index"]))
+        elif o.op == "mate":
+            a, b = p["ref"], p["mov"]
+            doc.add_mate(o.kind, a, b, float(p.get("offset", 0)), bool(p.get("aligned")))
+        elif o.op == "delete_mate":
+            doc.delete_mate(int(p["id"]))
+        elif o.op == "edit_mate":
+            doc.edit_mate(int(p["id"]), p.get("offset"), p.get("aligned"))
+        elif o.op == "fix":
+            doc.set_fixed(o.body, bool(p.get("fixed", True)))
+        elif o.op == "rebuild":
+            doc.rebuild()
         else:
             new, label, kind = _shape_op(o)
             doc.replace_shape(o.body, new, label, kind)

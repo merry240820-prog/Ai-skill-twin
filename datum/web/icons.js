@@ -52,6 +52,13 @@ const P = {
   edge: '<path d="M4 18 20 6"/><circle cx="4" cy="18" r="1.5"/><circle cx="20" cy="6" r="1.5"/>',
   vertex: '<circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M4 18l8-6 8-6" opacity=".4"/>',
   keyboard: '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
+  mate: '<rect x="3" y="12" width="9" height="8" rx="1"/><rect x="12" y="4" width="9" height="8" rx="1"/><path d="M12 12h0" stroke-width="3"/><path d="M8 9V5M6 7l2-2 2 2M16 15v4M14 17l2 2 2-2" opacity=".6"/>',
+  pin: '<path d="M9 3h6l-1 6 3 3H7l3-3z"/><path d="M12 12v9"/>',
+  interfere: '<rect x="3" y="7" width="11" height="11" rx="1"/><rect x="10" y="3" width="11" height="11" rx="1"/><path d="M10 7h4v7h-4z" fill="currentColor" fill-opacity=".45"/>',
+  explode: '<rect x="9" y="9" width="6" height="6" rx="1"/><path d="M4 4l3 3M20 4l-3 3M4 20l3-3M20 20l-3-3"/><path d="M4 4h3M4 4v3M20 4h-3M20 4v3M4 20h3M4 20v-3M20 20h-3M20 20v-3"/>',
+  sim: '<path d="M3 20h18"/><path d="M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6" opacity=".5"/><path d="M12 4v-1M12 9l0 0"/><circle cx="12" cy="10" r="1.6" fill="currentColor"/>',
+  stress: '<rect x="4" y="3" width="5" height="18" rx="1"/><path d="M13 6h7M13 10h5M13 14h7M13 18h4"/>',
+  rebuild: '<path d="M4 12a8 8 0 0 1 14-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L4 15"/><path d="M4 20v-5h5"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
 };
 
@@ -64,5 +71,5 @@ export const KIND_ICON = {
   new: 'new', open: 'open', import: 'import', primitive: 'box', move: 'move', rotate: 'rotate', scale: 'scale',
   mirror: 'mirror', fillet: 'fillet', chamfer: 'chamfer', hole: 'hole', extrude: 'extrude', offset: 'offset',
   diameter: 'diameter', distance: 'distance', shell: 'shell', delete_faces: 'deleteFace', union: 'union',
-  cut: 'cut', intersect: 'union', delete: 'trash', copy: 'copy', pattern: 'pattern', props: 'body', edit: 'body',
+  cut: 'cut', intersect: 'union', delete: 'trash', copy: 'copy', pattern: 'pattern', props: 'body', edit: 'body', mate: 'mate', fix: 'pin', rebuild: 'rebuild',
 };

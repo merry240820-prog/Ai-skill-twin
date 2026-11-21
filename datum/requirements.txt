@@ -2,3 +2,7 @@ cadquery-ocp>=8.0,<9
 fastapi>=0.110
 uvicorn>=0.29
 python-multipart>=0.0.9
+gmsh>=4.11
+numpy>=1.26
+scipy>=1.11
+pyamg>=5.0

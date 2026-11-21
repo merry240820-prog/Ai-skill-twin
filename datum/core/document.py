@@ -4,6 +4,7 @@ from __future__ import annotations
 import itertools
 from dataclasses import dataclass, field, replace
 
+from . import assembly
 from . import geometry as g
 from . import stepio
 
@@ -19,6 +20,7 @@ class Body:
     shape: object
     color: str = PALETTE[0]
     visible: bool = True
+    fixed: bool = False  # 어셈블리에서 움직이지 않는 부품(솔리드웍스의 '고정')
     id: int = field(default_factory=lambda: next(_ids))
     rev: int = field(default_factory=lambda: next(_revs))  # 형상이 바뀔 때마다 증가 → 화면 메시 캐시 키
 
@@ -32,6 +34,7 @@ class Step:
     label: str
     kind: str  # 타임라인 아이콘용 작업 종류
     bodies: list
+    mates: list = field(default_factory=list)
 
 
 class Document:
@@ -42,14 +45,19 @@ class Document:
         self.bodies: list[Body] = []
         self.history: list[Step] = []
         self.undone: list[Step] = []
+        self.mates: list[dict] = []
+        self.residual: dict = {}
         self.revision = 0
+        self._mate_ids = itertools.count(1)
 
     # ------------------------------------------------ 타임라인
     def _copy(self) -> list[Body]:
         return [replace(b) for b in self.bodies]
 
     def commit(self, label: str, kind: str = "edit"):
-        self.history.append(Step(label, kind, self._copy()))
+        if self.mates:
+            self._solve()
+        self.history.append(Step(label, kind, self._copy(), [dict(m) for m in self.mates]))
         if len(self.history) > self.MAX_UNDO:
             self.history.pop(0)
         self.undone.clear()
@@ -59,6 +67,8 @@ class Document:
         # 보이기/숨기기는 화면 상태라 되돌리지 않는다
         vis = {b.id: b.visible for b in self.bodies}
         self.bodies = [replace(b, visible=vis.get(b.id, b.visible)) for b in step.bodies]
+        self.mates = [dict(m) for m in step.mates]
+        self._residuals()
         self.revision += 1
 
     def undo(self):
@@ -106,6 +116,8 @@ class Document:
         self.__init__()
         self.name = name
         self._add_parts(parts, name.rsplit(".", 1)[0])
+        if len(self.bodies) > 1:
+            self.bodies[0].fixed = True  # 솔리드웍스처럼 첫 부품을 고정
         self.commit(f"열기 · {name}", "open")
 
     def import_step(self, path: str, name: str):
@@ -142,6 +154,7 @@ class Document:
     def delete_body(self, body_id: int):
         b = self.body(body_id)
         self.bodies.remove(b)
+        self.mates = [m for m in self.mates if body_id not in (m["ref"]["body"], m["mov"]["body"])]
         self.commit(f"바디 삭제 · {b.name}", "delete")
 
     def copy_body(self, body_id: int, dx=0.0, dy=0.0, dz=0.0):
@@ -173,6 +186,71 @@ class Document:
             self.commit(f"속성 · {b.name}", "props")
         else:
             self.revision += 1
+
+    # ------------------------------------------------ 어셈블리
+    def _solve(self):
+        shapes = {b.id: b.shape for b in self.bodies}
+        before = dict(shapes)
+        live = [m for m in self.mates if m["ref"]["body"] in shapes and m["mov"]["body"] in shapes]
+        self.residual = assembly.solve(live, shapes, {b.id for b in self.bodies if b.fixed})
+        for b in self.bodies:
+            if shapes[b.id] is not before[b.id]:
+                b.set_shape(shapes[b.id])
+
+    def _residuals(self):
+        shapes = {b.id: b.shape for b in self.bodies}
+        self.residual = {m["id"]: assembly._current_residual(m, shapes) for m in self.mates
+                         if m["ref"]["body"] in shapes and m["mov"]["body"] in shapes}
+
+    def add_mate(self, kind: str, ref: dict, mov: dict, offset: float = 0.0, aligned: bool = False):
+        if ref["body"] == mov["body"]:
+            raise g.GeometryError("서로 다른 부품의 요소를 고르세요")
+        m = {"id": next(self._mate_ids), "type": kind, "ref": ref, "mov": mov, "offset": offset, "aligned": aligned}
+        # 먼저 한 번 풀어 보고 실패하면 추가하지 않는다
+        shapes = {b.id: b.shape for b in self.bodies}
+        assembly.solve([m], shapes, {b.id for b in self.bodies if b.fixed})
+        if assembly._current_residual(m, shapes) > 1e-4:
+            raise g.GeometryError("메이트를 적용할 수 없습니다 — 두 부품이 모두 고정이거나 요소 종류가 맞지 않습니다")
+        self.mates.append(m)
+        self.commit(f"메이트 {assembly.MATE_NAMES[kind]} · {self.body(ref['body']).name} ↔ {self.body(mov['body']).name}", "mate")
+
+    def delete_mate(self, mate_id: int):
+        m = next((x for x in self.mates if x["id"] == mate_id), None)
+        if not m:
+            raise g.GeometryError("메이트를 찾을 수 없습니다")
+        self.mates.remove(m)
+        self.commit(f"메이트 삭제 · {assembly.MATE_NAMES[m['type']]}", "delete")
+
+    def edit_mate(self, mate_id: int, offset=None, aligned=None):
+        m = next((x for x in self.mates if x["id"] == mate_id), None)
+        if not m:
+            raise g.GeometryError("메이트를 찾을 수 없습니다")
+        if offset is not None:
+            m["offset"] = float(offset)
+        if aligned is not None:
+            m["aligned"] = bool(aligned)
+        self.commit(f"메이트 수정 · {assembly.MATE_NAMES[m['type']]}", "mate")
+
+    def set_fixed(self, body_id: int, fixed: bool):
+        b = self.body(body_id)
+        b.fixed = fixed
+        self.commit(f"{'고정' if fixed else '고정 해제'} · {b.name}", "fix")
+
+    def rebuild(self):
+        self.commit("재생성", "rebuild")
+
+    def mate_list(self):
+        out = []
+        for m in self.mates:
+            try:
+                rn, mn = self.body(m["ref"]["body"]).name, self.body(m["mov"]["body"]).name
+            except g.GeometryError:
+                continue
+            r = self.residual.get(m["id"], 0)
+            out.append({"id": m["id"], "type": m["type"], "name": assembly.MATE_NAMES[m["type"]],
+                        "label": f"{rn} ↔ {mn}", "offset": m.get("offset", 0), "aligned": m.get("aligned", False),
+                        "ok": r < 1e-4, "bodies": [m["ref"]["body"], m["mov"]["body"]]})
+        return out
 
     def timeline(self):
         return ([{"label": s.label, "kind": s.kind} for s in self.history],

@@ -85,7 +85,7 @@ controls.zoomToCursor = true;
 controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.ROTATE, RIGHT: THREE.MOUSE.PAN };
 renderer.domElement.addEventListener('pointerdown', (e) => {
   controls.mouseButtons.LEFT = e.altKey ? THREE.MOUSE.ROTATE : null;
-  controls.mouseButtons.MIDDLE = e.ctrlKey ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE;
+  controls.mouseButtons.MIDDLE = e.ctrlKey ? THREE.MOUSE.PAN : e.shiftKey ? THREE.MOUSE.DOLLY : THREE.MOUSE.ROTATE;
 }, true);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x6b7a8f, 1.5));
@@ -176,7 +176,7 @@ function makeBodyView(b, data) {
 async function applyState(s, { fit = false } = {}) {
   state = s;
   const need = s.bodies.filter((b) => !meshCache.has(`${b.id}:${b.rev}`));
-  const got = await Promise.all(need.map((b) => api(`/api/mesh/${b.id}`)));
+  const got = await Promise.all(need.map((b) => api(`/api/mesh/${b.id}?rev=${b.rev}`)));
   need.forEach((b, i) => meshCache.set(`${b.id}:${b.rev}`, got[i]));
   const alive = new Set(s.bodies.map((b) => b.id));
   views.forEach((v, id) => {
@@ -236,7 +236,7 @@ function renderBrowser() {
   state.bodies.forEach((b) => {
     const li = document.createElement('li');
     li.className = (b.id === selectedBody ? 'sel ' : '') + (b.visible ? '' : 'hid');
-    li.innerHTML = `<input type="color" class="sw" value="${b.color}" title="색상"><span class="nm" title="더블클릭해서 이름 바꾸기"></span><button class="vis icon-btn small" title="보이기/숨기기">${icon(b.visible ? 'eye' : 'eyeOff', 16)}</button>`;
+    li.innerHTML = `<input type="color" class="sw" value="${b.color}" title="색상"><span class="nm" title="더블클릭해서 이름 바꾸기"></span>${b.fixed ? `<span class="tag" title="고정 부품 — 메이트로 움직이지 않음">${icon('pin', 12)}고정</span>` : ''}<button class="vis icon-btn small" title="보이기/숨기기">${icon(b.visible ? 'eye' : 'eyeOff', 16)}</button>`;
     $('.nm', li).textContent = b.name;
     li.onclick = (e) => {
       if (e.target.closest('.vis,.sw')) return;
@@ -258,6 +258,29 @@ function renderBrowser() {
     li.onmouseenter = () => { const v = views.get(b.id); if (v) v.mesh.material.emissive.setHex(0x1d3b80); };
     li.onmouseleave = () => { const v = views.get(b.id); if (v) v.mesh.material.emissive.setHex(0); };
     ul.appendChild(li);
+  });
+  const mates = state.mates || [];
+  $('#mates-head').hidden = !mates.length;
+  $('#mate-count').textContent = mates.length || '';
+  const ml = $('#mates');
+  ml.innerHTML = '';
+  mates.forEach((m) => {
+    const li = document.createElement('li');
+    li.className = m.ok ? '' : 'bad';
+    li.innerHTML = `${icon('mate', 15)}<div class="mt"><b></b><small></small></div><button class="icon-btn small del" title="메이트 삭제">${icon('trash', 15)}</button>`;
+    $('b', li).textContent = m.name + (m.type === 'distance' ? ` ${fmt(m.offset / U(), 3)}` : '') + (m.ok ? '' : ' · 오류');
+    $('small', li).textContent = m.label;
+    li.title = m.type === 'distance' ? '더블클릭: 거리 수정' : '더블클릭: 정렬 반전';
+    li.ondblclick = () => safe(async () => {
+      if (m.type === 'distance') {
+        const v = prompt('메이트 거리', fmt(m.offset / U(), 4));
+        if (v != null && v !== '') await runOp({ op: 'edit_mate', params: { id: m.id, offset: parseFloat(v) * U() } });
+      } else await runOp({ op: 'edit_mate', params: { id: m.id, aligned: !m.aligned } });
+    });
+    li.onmouseenter = () => m.bodies.forEach((id) => views.get(id)?.mesh.material.emissive.setHex(0x1d3b80));
+    li.onmouseleave = () => m.bodies.forEach((id) => views.get(id)?.mesh.material.emissive.setHex(0));
+    $('.del', li).onclick = (e) => { e.stopPropagation(); safe(() => runOp({ op: 'delete_mate', params: { id: m.id } })); };
+    ml.appendChild(li);
   });
 }
 
@@ -380,7 +403,8 @@ renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (e.button !== 0 || e.altKey || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) return;
   const hit = pick(e);
-  if (!hit) { clearSelection(); return; }
+  if (!hit) { if (!activeTool?.onPick) clearSelection(); return; }
+  if (activeTool?.onPick) { activeTool.onPick(hit); return; }
   selectedBody = hit.body;
   const i = selection.findIndex((s) => same(s, hit));
   const max = activeTool?.max ?? 2;
@@ -510,10 +534,10 @@ function fitView(animate = true) {
   frame(dir, camera.up.clone(), animate);
 }
 const VIEWS = {
-  front: { dir: [0, -1, 0], name: '정면', key: '1' }, back: { dir: [0, 1, 0], name: '후면', key: '2' },
-  left: { dir: [-1, 0, 0], name: '좌측면', key: '3' }, right: { dir: [1, 0, 0], name: '우측면', key: '4' },
-  top: { dir: [0, 0, 1], name: '윗면', key: '5' }, bottom: { dir: [0, 0, -1], name: '아랫면', key: '6' },
-  iso: { dir: [1, -1.3, 0.9], name: '등각', key: '7' },
+  front: { dir: [0, -1, 0], name: '정면', key: 'Ctrl+1' }, back: { dir: [0, 1, 0], name: '후면', key: 'Ctrl+2' },
+  left: { dir: [-1, 0, 0], name: '좌측면', key: 'Ctrl+3' }, right: { dir: [1, 0, 0], name: '우측면', key: 'Ctrl+4' },
+  top: { dir: [0, 0, 1], name: '윗면', key: 'Ctrl+5' }, bottom: { dir: [0, 0, -1], name: '아랫면', key: 'Ctrl+6' },
+  iso: { dir: [1, -1.3, 0.9], name: '등각', key: 'Ctrl+7' },
 };
 function viewDir(d) {
   const dir = new THREE.Vector3(...d).normalize();
@@ -699,11 +723,22 @@ const TOOLS = {
       if (selection.length) { TOOLS.measure.render.call(TOOLS.measure, true); return; }
       panelBody.innerHTML = `<p class="hint">면·모서리·점을 클릭하면 치수가 바로 나오고, 옆에 뜨는 버튼으로 곧장 편집할 수 있습니다.</p>
         <div class="sect">마우스</div><ul class="tips">
-        <li><span>회전</span><span>가운데 드래그 · Alt+왼쪽</span></li><li><span>이동</span><span>오른쪽 · Ctrl+가운데</span></li>
+        <li><span>회전</span><span>가운데 드래그 · Alt+왼쪽</span></li><li><span>이동</span><span>Ctrl+가운데 · 오른쪽</span></li><li><span>확대(드래그)</span><span>Shift+가운데</span></li>
         <li><span>확대</span><span>휠 (커서 위치 기준)</span></li><li><span>전체 보기</span><span>F · 더블클릭</span></li></ul>
-        <div class="sect">키보드</div><ul class="tips">
-        <li><span>명령 검색</span><span><kbd>S</kbd> <kbd>Ctrl K</kbd></span></li><li><span>측정</span><span><kbd>M</kbd></span></li>
-        <li><span>보기 방향</span><span><kbd>1</kbd>–<kbd>7</kbd></span></li><li><span>취소 / 다시</span><span><kbd>Ctrl Z</kbd> <kbd>Ctrl Y</kbd></span></li>
+        <div class="sect">키보드 (솔리드웍스와 동일)</div><ul class="tips">
+        <li><span>보기 방향 메뉴</span><span><kbd>Space</kbd></span></li>
+        <li><span>정면·후면·좌·우·윗·아랫·등각</span><span><kbd>Ctrl 1</kbd>–<kbd>7</kbd></span></li>
+        <li><span>면에 수직</span><span><kbd>Ctrl 8</kbd></span></li>
+        <li><span>회전 15° / 90°</span><span><kbd>←↑→↓</kbd> <kbd>Shift</kbd></span></li>
+        <li><span>회전(롤) / 이동</span><span><kbd>Alt ←→</kbd> <kbd>Ctrl ←→</kbd></span></li>
+        <li><span>축소 / 확대</span><span><kbd>Z</kbd> <kbd>Shift Z</kbd></span></li>
+        <li><span>전체 보기</span><span><kbd>F</kbd></span></li>
+        <li><span>명령 검색</span><span><kbd>S</kbd></span></li>
+        <li><span>마지막 명령 반복</span><span><kbd>Enter</kbd></span></li>
+        <li><span>재생성</span><span><kbd>Ctrl B</kbd> <kbd>Ctrl Q</kbd></span></li>
+        <li><span>복사 / 붙여넣기</span><span><kbd>Ctrl C</kbd> <kbd>Ctrl V</kbd></span></li>
+        <li><span>새 문서 / 열기</span><span><kbd>Ctrl N</kbd> <kbd>Ctrl O</kbd></span></li>
+        <li><span>취소 / 다시</span><span><kbd>Ctrl Z</kbd> <kbd>Ctrl Y</kbd></span></li>
         <li><span>저장</span><span><kbd>Ctrl S</kbd></span></li></ul>`;
     },
   },
@@ -1015,6 +1050,327 @@ function setTool(name) {
 }
 TOOLS.select.refresh = () => TOOLS.select.render();
 
+// =============================================================== 어셈블리 · 시뮬레이션
+const interfGroup = new THREE.Group(), simGroup = new THREE.Group(), resultGroup = new THREE.Group();
+overlay.add(interfGroup, simGroup);
+scene.add(resultGroup);
+
+function suggestMate(sel) {
+  if (sel.length < 2) return 'coincident';
+  const round = (s) => s.ftype === 'cylinder' || s.kind === 'edge';
+  return sel.every(round) ? 'concentric' : 'coincident';
+}
+
+function applyExplode() {
+  const f = TOOLS.explode.factor || 0;
+  const box = worldBox();
+  const c = box.isEmpty() ? new THREE.Vector3() : box.getCenter(new THREE.Vector3());
+  views.forEach((v) => {
+    v.group.position.set(0, 0, 0);
+    if (!f) return;
+    const bc = new THREE.Box3().setFromObject(v.mesh).getCenter(new THREE.Vector3());
+    const dir = bc.sub(c);
+    if (dir.lengthSq() < 1e-9) dir.set(0, 0, 1).multiplyScalar(modelSize * 0.2);
+    v.group.position.copy(dir.multiplyScalar(f * 1.2));
+  });
+}
+
+// 응력·변위 색상표(파랑 → 청록 → 초록 → 노랑 → 빨강)
+const CMAP = [[0.0, [0.12, 0.23, 0.86]], [0.25, [0.0, 0.72, 0.95]], [0.5, [0.18, 0.80, 0.25]], [0.75, [0.98, 0.85, 0.1]], [1.0, [0.90, 0.12, 0.10]]];
+function cmap(t) {
+  t = Math.min(1, Math.max(0, t));
+  for (let i = 1; i < CMAP.length; i++) {
+    if (t <= CMAP[i][0]) {
+      const [t0, a] = CMAP[i - 1], [t1, b] = CMAP[i];
+      const k = (t - t0) / (t1 - t0);
+      return a.map((x, j) => x + (b[j] - x) * k);
+    }
+  }
+  return CMAP.at(-1)[1];
+}
+
+function clearInterf() { clearGroup(interfGroup); }
+
+Object.assign(TOOLS, {
+  mate: {
+    title: '메이트', icon: 'mate', accept: ['face', 'edge'], max: 2, type: 'coincident', userType: false,
+    render() {
+      if (!this.userType) this.type = suggestMate(selection);
+      panelBody.innerHTML = `<p class="hint">두 부품에서 면(또는 원형 모서리)을 하나씩 고르세요. <b>두 번째로 고른 부품</b>이 움직이고, 고정 부품은 움직이지 않습니다.</p>
+        ${picksBox(null, '① 기준 요소 → ② 움직일 요소')}
+        ${seg('mtype', [['coincident', '일치'], ['distance', '거리'], ['concentric', '동심'], ['parallel', '평행'], ['perpendicular', '수직']], this.type)}
+        <div id="moff" ${this.type === 'distance' ? '' : 'hidden'}>${field('거리', 'mdist', this.dist ?? 10)}</div>
+        ${check('정렬 반전', 'malign', this.aligned)}<p class="hint">일치·거리는 기본으로 두 면이 마주 봅니다. 같은 방향을 보게 하려면 정렬 반전을 켜세요.</p>
+        ${actions('메이트 추가')}`;
+      segWire('mtype', (v) => { this.type = v; this.userType = true; $('#moff').hidden = v !== 'distance'; });
+      $('#mdist').oninput = () => { this.dist = $('#mdist').value; };
+      $('#malign').onchange = () => { this.aligned = $('#malign').checked; };
+      bindOk(async () => {
+        if (selection.length !== 2) throw new Error('요소 두 개를 고르세요');
+        const [a, b] = selection;
+        await runOp({ op: 'mate', kind: this.type, params: { ref: { body: a.body, kind: a.kind, index: a.index }, mov: { body: b.body, kind: b.kind, index: b.index }, offset: this.type === 'distance' ? num('mdist') : 0, aligned: $('#malign').checked } });
+        selection = []; this.userType = false; redrawSelection(); this.render();
+      });
+    },
+    refresh() { this.render(); },
+  },
+
+  interference: {
+    title: '간섭 검사', icon: 'interfere', max: 0,
+    render() {
+      panelBody.innerHTML = `<p class="hint">보이는 부품끼리 서로 파고든 부피를 찾아 빨갛게 표시합니다.</p><div id="ires"></div>
+        <div class="btns"><button class="ok" id="irun">${icon('interfere', 16)}다시 검사</button><button id="cancel">닫기</button></div>`;
+      $('#irun').onclick = () => safe(() => this.run());
+      $('#cancel').onclick = () => setTool(null);
+      safe(() => this.run());
+    },
+    async run() {
+      clearInterf();
+      $('#ires').innerHTML = '<p class="hint">검사 중…</p>';
+      const r = await api('/api/interference');
+      if (!$('#ires')) return;
+      if (!r.hits.length) { $('#ires').innerHTML = `<div class="big ok"><span>결과</span><b>간섭 없음</b></div>`; return; }
+      r.hits.forEach((h) => {
+        h.mesh.faces.forEach((f) => {
+          if (!f.idx.length) return;
+          const geo = new THREE.BufferGeometry();
+          geo.setAttribute('position', new THREE.Float32BufferAttribute(f.pos, 3));
+          geo.setIndex(f.idx);
+          const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.85, depthTest: false, side: THREE.DoubleSide }));
+          m.renderOrder = 8;
+          interfGroup.add(m);
+        });
+      });
+      views.forEach((v) => { v.mesh.material.transparent = true; v.mesh.material.opacity = 0.35; });
+      $('#ires').innerHTML = `<div class="big bad"><span>간섭</span><b>${r.hits.length}곳</b></div>` +
+        `<ul class="list">${r.hits.map((h) => `<li>${icon('interfere', 14)}<span>${h.a_name} ↔ ${h.b_name}</span><em>${V(h.volume)}</em></li>`).join('')}</ul>`;
+    },
+    leave() { clearInterf(); views.forEach((v) => { v.mesh.material.transparent = false; v.mesh.material.opacity = 1; }); },
+    refresh() {},
+  },
+
+  explode: {
+    title: '분해 보기', icon: 'explode', max: 0, factor: 0,
+    render() {
+      panelBody.innerHTML = `<p class="hint">부품을 어셈블리 중심에서 바깥으로 벌려 봅니다. 화면에만 적용되고 위치는 바뀌지 않습니다.</p>
+        <div class="row"><label>분해 정도</label><input id="xf" type="range" min="0" max="100" value="${this.factor * 100}"></div>
+        <div class="btns"><button id="cancel">닫기(원위치)</button></div>`;
+      $('#xf').oninput = () => { this.factor = $('#xf').value / 100; applyExplode(); };
+      $('#cancel').onclick = () => setTool(null);
+    },
+    leave() { this.factor = 0; applyExplode(); },
+    refresh() { applyExplode(); },
+  },
+
+  simulate: {
+    title: '정적 해석', icon: 'sim', accept: ['face'], max: 0,
+    body: null, fixed: new Set(), load: new Set(), active: 'fixed', result: null, plot: 'vm', scale: 1, materials: null,
+    async render() {
+      if (!this.materials) this.materials = await api('/api/materials');
+      if (this.body != null && !state.bodies.some((b) => b.id === this.body)) this.reset();
+      if (this.body == null) this.body = targetBody() ?? null;
+      const mats = this.materials.map((m) => [m.key, m.name]).concat([['custom', '직접 입력']]);
+      const setBox = (key, title, hint) => {
+        const items = [...this[key]];
+        return `<div class="picks setbox ${key} ${this.active === key ? 'active' : ''}" data-set="${key}"><div class="sethead">${icon(key === 'fixed' ? 'pin' : 'stress', 14)}<b>${title}</b><span>${items.length ? `면 ${items.length}개` : hint}</span></div></div>`;
+      };
+      panelBody.innerHTML = `
+        <div class="picks"><div class="pk">${icon('body', 14)}<b>${this.body != null ? bodyName(this.body) : '면을 클릭해 부품을 고르세요'}</b></div></div>
+        <div class="sect">1 · 재질</div>${select('재질', 'smat', mats)}<div id="smat-custom" hidden>${field('탄성계수 E', 'sE', 210000, 'MPa')}${field('푸아송비', 'snu', 0.3, '')}${field('항복강도', 'sy', 275, 'MPa')}</div><div id="smat-info"></div>
+        <div class="sect">2 · 고정(구속)</div>${setBox('fixed', '고정 면', '클릭해서 활성화 후 면 선택')}
+        <div class="sect">3 · 외부 하중</div>${setBox('load', '하중 면', '클릭해서 활성화 후 면 선택')}
+        ${seg('ltype', [['force', '힘 (N)'], ['pressure', '압력 (MPa)']], this.ltype || 'force')}<div style="height:6px"></div>
+        ${field('크기', 'lval', this.lval ?? 1000, this.ltype === 'pressure' ? 'MPa' : 'N')}
+        ${select('방향', 'ldir', [['normal', '면에 수직 (누름)'], ['-normal', '면에 수직 (당김)'], ['-z', '−Z (아래)'], ['z', '+Z'], ['-x', '−X'], ['x', '+X'], ['-y', '−Y'], ['y', '+Y']])}
+        <div class="sect">4 · 메시</div>${seg('smesh', [['coarse', '거침'], ['normal', '보통'], ['fine', '세밀']], this.mesh || 'normal')}
+        <div class="btns"><button class="ok" id="srun">${icon('sim', 16)}해석 실행</button><button id="cancel">닫기</button></div><div class="err" id="err"></div>
+        <div id="sres"></div>`;
+      $('#smat').value = this.mat || 'steel';
+      if (this.ldir) $('#ldir').value = this.ldir;
+      const matInfo = () => {
+        const m = this.materials.find((x) => x.key === val('smat'));
+        $('#smat-custom').hidden = !!m;
+        $('#smat-info').innerHTML = m ? `<p class="hint">E ${m.E.toLocaleString()} MPa · ν ${m.nu} · 항복 ${m.yield} MPa · ${m.density} g/cm³</p>` : '';
+        this.mat = val('smat');
+      };
+      $('#smat').onchange = matInfo; matInfo();
+      segWire('ltype', (v) => { this.ltype = v; $('#lval').nextElementSibling.textContent = v === 'pressure' ? 'MPa' : 'N'; });
+      segWire('smesh', (v) => { this.mesh = v; });
+      $('#lval').oninput = () => { this.lval = $('#lval').value; };
+      $('#ldir').onchange = () => { this.ldir = val('ldir'); };
+      $$('.setbox').forEach((b) => (b.onclick = () => { this.active = b.dataset.set; this.render(); }));
+      $('#srun').onclick = () => submit(() => this.run());
+      $('#cancel').onclick = () => setTool(null);
+      this.drawSets();
+      if (this.result) this.showResult();
+    },
+    reset() { this.body = null; this.fixed.clear(); this.load.clear(); this.clearResult(); },
+    onPick(hit) {
+      if (hit.kind !== 'face') return;
+      if (this.body != null && hit.body !== this.body) {
+        if (this.fixed.size || this.load.size) { toast('한 부품 안에서만 면을 고를 수 있습니다 — 다른 부품을 해석하려면 닫았다 다시 여세요', true); return; }
+      }
+      this.body = hit.body;
+      const set = this[this.active], other = this[this.active === 'fixed' ? 'load' : 'fixed'];
+      set.has(hit.index) ? set.delete(hit.index) : (other.delete(hit.index), set.add(hit.index));
+      this.clearResult();
+      this.render();
+    },
+    drawSets() {
+      clearGroup(simGroup);
+      if (this.body == null) return;
+      this.fixed.forEach((i) => highlight(simGroup, { body: this.body, kind: 'face', index: i }, 0x16a34a));
+      this.load.forEach((i) => highlight(simGroup, { body: this.body, kind: 'face', index: i }, 0x9333ea));
+    },
+    material() {
+      const m = this.materials.find((x) => x.key === val('smat'));
+      return m ? { E: m.E, nu: m.nu, yield: m.yield } : { E: num('sE'), nu: num('snu'), yield: num('sy') };
+    },
+    async run() {
+      if (this.body == null) throw new Error('해석할 부품의 면을 클릭하세요');
+      if (!this.fixed.size) throw new Error('고정 면을 하나 이상 고르세요');
+      if (!this.load.size) throw new Error('하중 면을 고르세요');
+      $('#srun').disabled = true;
+      $('#sres').innerHTML = '<p class="hint">메시 생성 · 해석 중… (보통 수 초)</p>';
+      try {
+        const t0 = performance.now();
+        this.result = await post('/api/sim/static', {
+          body: this.body, fixed: [...this.fixed], density: segVal('smesh'), material: this.material(),
+          loads: [{ faces: [...this.load], type: segVal('ltype'), value: num('lval'), dir: val('ldir') }],
+        });
+        this.result.seconds = (performance.now() - t0) / 1000;
+        this.scale = 1;
+        this.showResult();
+        toast(`해석 완료 · 최대 응력 ${fmt(this.result.max_vm, 2)} MPa`);
+      } finally { if ($('#srun')) $('#srun').disabled = false; }
+    },
+    showResult() {
+      const r = this.result;
+      if (!r) return;
+      const v = views.get(r.body);
+      if (!v || v.rev !== r.rev) { this.clearResult(); return; }
+      v.group.visible = false;
+      clearGroup(simGroup);
+      clearGroup(resultGroup);
+      clearDims();
+      const s = r.surface;
+      const n = s.vm.length;
+      const dmag = new Float32Array(n);
+      for (let i = 0; i < n; i++) dmag[i] = Math.hypot(s.disp[i * 3], s.disp[i * 3 + 1], s.disp[i * 3 + 2]);
+      const vals = this.plot === 'vm' ? s.vm : dmag;
+      const max = this.plot === 'vm' ? r.max_vm : r.max_disp;
+      const auto = r.max_disp > 0 ? modelSize * 0.06 / r.max_disp : 0;
+      const k = auto * this.scale;
+      const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < 3; j++) pos[i * 3 + j] = s.pos[i * 3 + j] + s.disp[i * 3 + j] * k;
+        const c = cmap(max > 0 ? vals[i] / max : 0);
+        col.set(c, i * 3);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      geo.setIndex(s.idx);
+      geo.computeVertexNormals();
+      resultGroup.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, metalness: 0, side: THREE.DoubleSide })));
+      // 변형 전 윤곽(옅게)
+      const ghost = new THREE.LineSegments(new THREE.BufferGeometry().copy(v.lines.geometry), new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.35 }));
+      resultGroup.add(ghost);
+      const at = this.plot === 'vm' ? r.max_vm_at : r.max_disp_at;
+      drawDim(at, at, this.plot === 'vm' ? `최대 ${fmt(r.max_vm, 2)} MPa` : `최대 ${L(r.max_disp, 4)}`);
+      this.legend(max);
+      const fos = r.fos;
+      const cls = fos == null ? '' : fos < 1 ? 'bad' : fos < 1.5 ? 'warn' : 'ok';
+      $('#sres').innerHTML = `<div class="sect">결과</div>
+        ${fos != null ? `<div class="big ${cls}"><span>최소 안전계수</span><b>${fmt(fos, 2)}</b></div>` : ''}
+        ${seg('splot', [['vm', '응력 (von Mises)'], ['disp', '변위']], this.plot)}
+        <div class="row" style="margin-top:10px"><label>변형 배율</label><input id="sscale" type="range" min="0" max="300" value="${this.scale * 100}"></div>
+        <p class="hint" id="sscale-t">실제 변형의 ${fmt(k, 1)}배로 과장해서 보여 줍니다</p>
+        ${kv([['최대 응력', `${fmt(r.max_vm, 2)} MPa`], ['항복강도', r.yield ? `${r.yield} MPa` : '—'], ['최대 변위', L(r.max_disp, 4)],
+        ['하중 합력', `${fmt(Math.hypot(...r.applied_force), 2)} N`], ['절점 / 요소', `${r.nodes.toLocaleString()} / ${r.elements.toLocaleString()}`], ['계산 시간', `${fmt(r.seconds, 1)} 초`]])}
+        <p class="hint">${fos == null ? '' : fos < 1 ? '항복강도를 넘습니다 — 두께를 늘리거나 재질을 바꾸세요.' : fos < 1.5 ? '여유가 작습니다(안전계수 1.5 미만).' : '항복까지 충분한 여유가 있습니다.'} 고정 면 모서리의 응력 집중은 실제보다 크게 나올 수 있습니다.</p>
+        <div class="btns"><button id="sclear">${icon('close', 16)}결과 지우기</button></div>`;
+      segWire('splot', (p) => { this.plot = p; this.showResult(); });
+      $('#sscale').oninput = () => { this.scale = $('#sscale').value / 100; this.showResult(); };
+      $('#sclear').onclick = () => { this.clearResult(); this.render(); };
+    },
+    legend(max) {
+      let el = $('#legend');
+      if (!el) { el = document.createElement('div'); el.id = 'legend'; vp.appendChild(el); }
+      const unit = this.plot === 'vm' ? 'MPa' : units;
+      const scaleV = this.plot === 'vm' ? 1 : 1 / U();
+      const ticks = [1, 0.8, 0.6, 0.4, 0.2, 0].map((t) => `<span>${fmt(max * t * scaleV, this.plot === 'vm' ? 1 : 4)}</span>`).join('');
+      const stops = CMAP.map(([t, c]) => `rgb(${c.map((x) => Math.round(x * 255)).join(',')}) ${(1 - t) * 100}%`).reverse().join(',');
+      const y = this.plot === 'vm' && this.result.yield && this.result.yield < max ? `<i class="yield" style="top:${(1 - this.result.yield / max) * 100}%" title="항복강도"></i>` : '';
+      el.innerHTML = `<b>${this.plot === 'vm' ? 'von Mises 응력' : '합 변위'} (${unit})</b><div class="lg"><div class="bar" style="background:linear-gradient(to bottom, ${CMAP.slice().reverse().map(([t, c]) => `rgb(${c.map((x) => Math.round(x * 255)).join(',')})`).join(',')})">${y}</div><div class="ticks">${ticks}</div></div>`;
+      void stops;
+    },
+    clearResult() {
+      this.result = null;
+      clearGroup(resultGroup);
+      clearDims();
+      $('#legend')?.remove();
+      views.forEach((v, id) => { v.group.visible = state.bodies.find((b) => b.id === id)?.visible ?? true; });
+    },
+    leave() { this.clearResult(); clearGroup(simGroup); },
+    refresh() {
+      // 형상이 바뀌면(실행 취소 등) 결과는 무효
+      if (this.result && views.get(this.result.body)?.rev !== this.result.rev) { this.clearResult(); this.render(); return; }
+      this.drawSets();
+      if (this.result) views.get(this.result.body).group.visible = false;
+    },
+  },
+});
+
+// =============================================================== 솔리드웍스 방식 보기 조작
+function orbitBy(axis, deg) {
+  const off = camera.position.clone().sub(controls.target);
+  const q = new THREE.Quaternion().setFromAxisAngle(axis.clone().normalize(), THREE.MathUtils.degToRad(deg));
+  animateTo(controls.target.clone().add(off.applyQuaternion(q)), controls.target.clone(), camera.up.clone().applyQuaternion(q));
+}
+function screenAxes() {
+  const dir = controls.target.clone().sub(camera.position).normalize();
+  const right = dir.clone().cross(camera.up).normalize();
+  const up = right.clone().cross(dir).normalize();
+  return { dir, right, up };
+}
+function rollBy(deg) {
+  const { dir } = screenAxes();
+  const q = new THREE.Quaternion().setFromAxisAngle(dir, THREE.MathUtils.degToRad(deg));
+  animateTo(camera.position.clone(), controls.target.clone(), camera.up.clone().applyQuaternion(q));
+}
+function panBy(dx, dy) {
+  const { right, up } = screenAxes();
+  const h = pixelSize() * renderer.domElement.clientHeight;
+  const d = right.multiplyScalar(dx * h * 0.1).add(up.multiplyScalar(dy * h * 0.1));
+  animateTo(camera.position.clone().add(d), controls.target.clone().add(d), camera.up.clone());
+}
+function zoomBy(f) {
+  if (camera === ortho) { animateTo(camera.position.clone(), controls.target.clone(), camera.up.clone(), ortho.zoom * f); return; }
+  const off = camera.position.clone().sub(controls.target).multiplyScalar(1 / f);
+  animateTo(controls.target.clone().add(off), controls.target.clone(), camera.up.clone());
+}
+function normalTo() {
+  const f = selection.find((s) => s.kind === 'face');
+  if (!f) { toast('평면을 먼저 선택하세요 (Ctrl+8: 면에 수직으로 보기)', true); return; }
+  const v = views.get(f.body);
+  const fd = v.data.faces[f.index];
+  const p = (i) => new THREE.Vector3(fd.pos[fd.idx[i] * 3], fd.pos[fd.idx[i] * 3 + 1], fd.pos[fd.idx[i] * 3 + 2]);
+  const n = p(1).sub(p(0)).cross(p(2).sub(p(0))).normalize();
+  viewDir(n.toArray());
+}
+function viewMenu(x, y) {
+  let m = $('#viewmenu');
+  if (!m) { m = document.createElement('div'); m.id = 'viewmenu'; document.body.appendChild(m); }
+  const items = [...Object.entries(VIEWS).map(([k, v]) => [k, v.name, v.key]), ['normal', '면에 수직', 'Ctrl+8']];
+  m.innerHTML = `<b>보기 방향</b>` + items.map(([k, n, key]) => `<button data-v="${k}">${icon(k === 'iso' ? 'views' : k === 'normal' ? 'face' : 'box', 16)}<span>${n}</span><kbd>${key}</kbd></button>`).join('');
+  m.style.left = `${Math.min(x, innerWidth - 220)}px`;
+  m.style.top = `${Math.min(y, innerHeight - 320)}px`;
+  m.hidden = false;
+  $$('button', m).forEach((b) => (b.onclick = () => { m.hidden = true; b.dataset.v === 'normal' ? normalTo() : setView(b.dataset.v); }));
+  setTimeout(() => window.addEventListener('pointerdown', (e) => { if (!m.contains(e.target)) m.hidden = true; }, { once: true }), 0);
+}
+
 // =============================================================== 명령(리본 · 명령 검색 · 단축키가 공유)
 const ACT = {
   new: () => safe(async () => { if (state.bodies.length && !confirm('새 문서를 만들까요? 저장하지 않은 변경은 사라집니다.')) return; await applyState(await post('/api/new', {}), { fit: true }); }),
@@ -1044,7 +1400,18 @@ const ACT = {
   theme: () => { theme = theme === 'dark' ? 'light' : 'dark'; store.set('theme', theme); applyTheme(); },
   units: () => { units = units === 'mm' ? 'in' : 'mm'; store.set('units', units); $('#btn-units').textContent = units; activeTool?.refresh?.(); toast(`표시 단위: ${units === 'mm' ? '밀리미터' : '인치'}`); },
   palette: () => openPalette(),
+  fix: () => safe(async () => {
+    const id = targetBody();
+    if (id == null) return;
+    const b = state.bodies.find((x) => x.id === id);
+    await runOp({ op: 'fix', body: id, params: { fixed: !b.fixed } });
+  }),
+  rebuild: () => safe(() => runOp({ op: 'rebuild' }, '재생성 완료')),
+  copyBody: () => { clip = targetBody(); if (clip != null) toast(`복사 · ${bodyName(clip)}`); },
+  paste: () => safe(async () => { if (clip != null) await runOp({ op: 'copy_body', body: clip, params: { dx: modelSize * 0.1, dy: 0, dz: 0 } }); }),
 };
+let clip = null;
+let lastCmd = null;
 
 const CMD = {};
 const RIBBON = [
@@ -1061,6 +1428,13 @@ const RIBBON = [
     { name: '변환', items: [['translate', '이동', 'move', 'T'], ['rotate', '회전', 'rotate'], ['scale', '크기', 'scale'], ['mirror', '대칭', 'mirror']] },
     { name: '관리', items: [['copy_body', '복사', 'copy'], ['deleteBody', '바디 삭제', 'trash', null, ACT.deleteBody]] },
   ] },
+  { tab: '어셈블리', groups: [
+    { name: '구속', items: [['mate', '메이트', 'mate', 'Ctrl+M'], ['fix', '고정/해제', 'pin', null, () => ACT.fix()], ['rebuild', '재생성', 'rebuild', 'Ctrl+B', () => ACT.rebuild()]] },
+    { name: '평가', items: [['interference', '간섭 검사', 'interfere'], ['explode', '분해 보기', 'explode']] },
+  ] },
+  { tab: '시뮬레이션', groups: [
+    { name: '정적 해석', items: [['simulate', '응력 해석', 'sim']] },
+  ] },
   { tab: '검사', groups: [
     { name: '측정', items: [['measure', '측정', 'measure', 'M'], ['mass', '질량 특성', 'mass'], ['section', '단면도', 'section', 'X']] },
   ] },
@@ -1076,6 +1450,7 @@ RIBBON.forEach((t) => t.groups.forEach((g) => g.items.forEach(([id, name, ic, ke
 function runCmd(id) {
   const c = CMD[id];
   if (!c) return;
+  if (!id.startsWith('view-') && !['undo', 'redo', 'fit'].includes(id)) lastCmd = id;
   if (c.fn) { c.fn(); return; }
   setTool(activeTool === TOOLS[id] ? null : id);
 }
@@ -1162,23 +1537,41 @@ async function download(url, ext) {
   toast(`저장 · ${a.download}`);
 }
 
-// =============================================================== 키보드
+// =============================================================== 키보드(솔리드웍스 기본 단축키)
+let lastMouse = [innerWidth / 2, innerHeight / 2];
+window.addEventListener('pointermove', (e) => { lastMouse = [e.clientX, e.clientY]; });
 window.addEventListener('keydown', (e) => {
   if (!$('#palette').hidden) return;
   if (e.target.matches('input, select, textarea')) { if (e.key === 'Escape') e.target.blur(); return; }
   const k = e.key.toLowerCase();
   const mod = e.ctrlKey || e.metaKey;
-  if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? ACT.redo() : ACT.undo(); return; }
-  if (mod && k === 'y') { e.preventDefault(); ACT.redo(); return; }
-  if (mod && k === 's') { e.preventDefault(); ACT.save(); return; }
-  if (mod && k === 'o') { e.preventDefault(); ACT.open(); return; }
-  if (mod && k === 'k') { e.preventDefault(); openPalette(); return; }
-  if (mod || e.altKey) return;
-  if (k === 'escape') { if (selection.length) clearSelection(); else setTool(null); return; }
+  const arrow = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, 1], arrowdown: [0, -1] }[k];
+  if (mod) {
+    const views7 = ['front', 'back', 'left', 'right', 'top', 'bottom', 'iso'];
+    if (/^[1-7]$/.test(k)) { e.preventDefault(); setView(views7[Number(k) - 1]); return; }
+    if (k === '8') { e.preventDefault(); normalTo(); return; }
+    if (arrow) { e.preventDefault(); panBy(-arrow[0], -arrow[1]); return; }
+    const map = { z: () => (e.shiftKey ? ACT.redo() : ACT.undo()), y: ACT.redo, s: ACT.save, o: ACT.open, n: ACT.new, k: openPalette,
+      b: ACT.rebuild, q: ACT.rebuild, r: () => { resize(); toast('화면 다시 그리기'); }, m: () => runCmd('mate'), c: ACT.copyBody, v: ACT.paste };
+    if (map[k] && !(k === 'c' && window.getSelection()?.toString())) { e.preventDefault(); map[k](); }
+    return;
+  }
+  if (arrow) {
+    e.preventDefault();
+    const deg = e.shiftKey ? 90 : 15;
+    if (e.altKey) { rollBy(arrow[0] * deg); return; }
+    const { right, up } = screenAxes();
+    if (arrow[0]) orbitBy(up, -arrow[0] * deg); else orbitBy(right, arrow[1] * deg);
+    return;
+  }
+  if (e.altKey) return;
+  if (k === ' ') { e.preventDefault(); viewMenu(lastMouse[0], lastMouse[1]); return; }
+  if (k === 'escape') { $('#viewmenu') && ($('#viewmenu').hidden = true); if (selection.length) clearSelection(); else setTool(null); return; }
+  if (k === 'enter') { if (lastCmd) runCmd(lastCmd); return; }
   if (k === 's') { e.preventDefault(); openPalette(); return; }
+  if (k === 'z') { zoomBy(e.shiftKey ? 1.25 : 0.8); return; }
+  if (k === 'f') { fitView(); return; }
   if (k === 'delete') { if (selection.some((s) => s.kind === 'face')) runCmd('delete_faces'); return; }
-  const v = Object.entries(VIEWS).find(([, x]) => x.key === k);
-  if (v) { setView(v[0]); return; }
   const c = Object.values(CMD).find((x) => x.key && x.key.length === 1 && x.key.toLowerCase() === k);
   if (c) runCmd(c.id);
 });
