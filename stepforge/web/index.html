@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StepForge</title>
+<link rel="stylesheet" href="/static/style.css">
+<script type="importmap">
+{ "imports": { "three": "/static/vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<header id="cmd">
+  <div class="brand">StepForge</div>
+  <nav id="tabs">
+    <button data-tab="file" class="on">파일</button>
+    <button data-tab="feature">피처</button>
+    <button data-tab="edit">이동/변형</button>
+    <button data-tab="eval">측정/평가</button>
+    <button data-tab="view">보기</button>
+  </nav>
+  <div id="ribbon">
+    <div class="group" data-tab="file">
+      <button data-act="new"><b>＋</b>새 문서</button>
+      <button data-act="open"><b>📂</b>STEP 열기</button>
+      <button data-act="import"><b>⇲</b>STEP 가져오기</button>
+      <button data-act="save-step"><b>💾</b>STEP 저장</button>
+      <button data-act="save-stl"><b>▤</b>STL 내보내기</button>
+    </div>
+    <div class="group" data-tab="feature" hidden>
+      <button data-tool="primitive"><b>⬛</b>기본 형상</button>
+      <button data-tool="push_pull"><b>⇕</b>면 밀기/당기기</button>
+      <button data-tool="hole"><b>◎</b>구멍</button>
+      <button data-tool="fillet"><b>◜</b>필렛</button>
+      <button data-tool="chamfer"><b>◸</b>챔퍼</button>
+      <button data-tool="shell"><b>▢</b>쉘</button>
+      <button data-tool="delete_faces"><b>✂</b>면 삭제</button>
+      <button data-tool="boolean"><b>⊕</b>합치기/빼기</button>
+    </div>
+    <div class="group" data-tab="edit" hidden>
+      <button data-tool="translate"><b>✥</b>이동</button>
+      <button data-tool="copy_body"><b>⧉</b>복사</button>
+      <button data-tool="rotate"><b>⟳</b>회전</button>
+      <button data-tool="scale"><b>⤢</b>크기</button>
+      <button data-tool="mirror"><b>⇋</b>대칭</button>
+      <button data-act="delete-body"><b>🗑</b>바디 삭제</button>
+    </div>
+    <div class="group" data-tab="eval" hidden>
+      <button data-tool="measure"><b>📏</b>측정</button>
+      <button data-tool="mass"><b>⚖</b>질량 특성</button>
+      <button data-tool="section"><b>◧</b>단면도</button>
+    </div>
+    <div class="group" data-tab="view" hidden>
+      <button data-view="front"><b>▣</b>정면</button>
+      <button data-view="top"><b>▣</b>윗면</button>
+      <button data-view="right"><b>▣</b>우측면</button>
+      <button data-view="back"><b>▣</b>후면</button>
+      <button data-view="bottom"><b>▣</b>아랫면</button>
+      <button data-view="iso"><b>◇</b>등각</button>
+      <button data-act="fit"><b>⛶</b>전체 보기</button>
+      <button data-act="wire"><b>⬚</b>와이어프레임</button>
+      <button data-act="edges"><b>▭</b>모서리 표시</button>
+      <button data-act="ortho"><b>⊡</b>원근/평행</button>
+    </div>
+  </div>
+  <div class="undo">
+    <button data-act="undo" title="실행 취소 (Ctrl+Z)">↶</button>
+    <button data-act="redo" title="다시 실행 (Ctrl+Y)">↷</button>
+  </div>
+</header>
+
+<main>
+  <aside id="tree">
+    <h3 id="docname">새 문서</h3>
+    <section>
+      <h4>바디</h4>
+      <ul id="bodies"></ul>
+    </section>
+    <section>
+      <h4>작업 기록</h4>
+      <ol id="history"></ol>
+    </section>
+  </aside>
+
+  <div id="viewport">
+    <div id="filter" title="선택 필터">
+      <label><input type="checkbox" value="face" checked> 면</label>
+      <label><input type="checkbox" value="edge" checked> 모서리</label>
+      <label><input type="checkbox" value="vertex" checked> 점</label>
+    </div>
+    <div id="triad"></div>
+    <div id="busy" hidden>계산 중…</div>
+  </div>
+
+  <aside id="panel">
+    <h3 id="panel-title">선택</h3>
+    <div id="panel-body"></div>
+  </aside>
+</main>
+
+<footer id="status">
+  <span id="status-msg">STEP 파일을 열거나 끌어다 놓으세요.</span>
+  <span id="status-sel"></span>
+  <span>단위: mm</span>
+</footer>
+
+<input type="file" id="file" accept=".step,.stp" hidden>
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>
