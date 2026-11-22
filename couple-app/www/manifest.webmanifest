@@ -3,8 +3,8 @@
   "short_name": "개굴씨",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F3F7F1",
-  "theme_color": "#2F7A4F",
+  "background_color": "#FFF7F3",
+  "theme_color": "#CC4C74",
   "lang": "ko",
   "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
 }

@@ -1,42 +1,49 @@
 :root {
-  --bg: #F3F7F1;
+  --bg: #FFF7F3;
   --surface: #FFFFFF;
-  --surface-2: #E8F0E4;
-  --ink: #17261C;
-  --ink-2: #4B5E51;
-  --ink-3: #7F9184;
-  --line: #D6E2D4;
-  --accent: #2F7A4F;
-  --accent-2: #3F9562;
-  --accent-soft: #DCEFE0;
+  --surface-2: #FBEDE8;
+  --ink: #2B1D22;
+  --ink-2: #6E5862;
+  --ink-3: #A3909A;
+  --line: #F1DDD8;
+  --accent: #CC4C74;
+  --accent-2: #E06B90;
+  --accent-soft: #FDE6EE;
   --on-accent: #FFFFFF;
-  --warm: #B6522E;
-  --warm-soft: #FBE6DB;
+  --leaf: #3E8E5E;
+  --leaf-soft: #E2F3E8;
+  --warm: #D9673D;
+  --warm-soft: #FDE9DF;
   --gold: #9A6C10;
-  --gold-soft: #F7EBCF;
+  --gold-soft: #FBF0D6;
   --danger: #B3261E;
-  --danger-soft: #F9DEDC;
-  --husband: #2E6DB4;
-  --wife: #C2476B;
-  --shadow: 0 1px 2px rgba(23, 38, 28, .06), 0 10px 26px -16px rgba(23, 38, 28, .35);
-  --r: 16px;
+  --danger-soft: #FCE2DF;
+  --husband: #3569B5;
+  --wife: #CC4C74;
+  --hero: linear-gradient(135deg, #FFD6E2 0%, #FFE6D8 55%, #E4F4E8 100%);
+  --shadow: 0 1px 2px rgba(80, 30, 45, .06), 0 12px 28px -18px rgba(150, 50, 80, .45);
+  --r: 20px;
   --f: 'Pretendard', 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0E1511; --surface: #16211A; --surface-2: #1E2C23; --ink: #E6F0E8; --ink-2: #A9BDAE; --ink-3: #7A8E7F;
-    --line: #2A3B30; --accent: #6CC48C; --accent-2: #86D6A2; --accent-soft: #1B3826; --on-accent: #08140C;
-    --warm: #F09A72; --warm-soft: #3A2218; --gold: #E0B653; --gold-soft: #33290F; --danger: #F2938B; --danger-soft: #3D1A17;
-    --husband: #7EB0EC; --wife: #EE8FAB; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 26px -16px rgba(0, 0, 0, .8);
+    --bg: #17100F; --surface: #221819; --surface-2: #2E2023; --ink: #F6E9EC; --ink-2: #C9AFB8; --ink-3: #8F7881;
+    --line: #3A2A2E; --accent: #F28DAC; --accent-2: #F7A9C0; --accent-soft: #3D2029; --on-accent: #2A0E17;
+    --leaf: #7FCB98; --leaf-soft: #1D3325; --warm: #F29A72; --warm-soft: #3B2318; --gold: #E0B653; --gold-soft: #33290F;
+    --danger: #F2938B; --danger-soft: #3D1A17; --husband: #8DB6EE; --wife: #F28DAC;
+    --hero: linear-gradient(135deg, #3B1E28 0%, #3A2620 55%, #1C2E22 100%);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 28px -18px rgba(0, 0, 0, .8);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0E1511; --surface: #16211A; --surface-2: #1E2C23; --ink: #E6F0E8; --ink-2: #A9BDAE; --ink-3: #7A8E7F;
-  --line: #2A3B30; --accent: #6CC48C; --accent-2: #86D6A2; --accent-soft: #1B3826; --on-accent: #08140C;
-  --warm: #F09A72; --warm-soft: #3A2218; --gold: #E0B653; --gold-soft: #33290F; --danger: #F2938B; --danger-soft: #3D1A17;
-  --husband: #7EB0EC; --wife: #EE8FAB; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 26px -16px rgba(0, 0, 0, .8);
+  --bg: #17100F; --surface: #221819; --surface-2: #2E2023; --ink: #F6E9EC; --ink-2: #C9AFB8; --ink-3: #8F7881;
+  --line: #3A2A2E; --accent: #F28DAC; --accent-2: #F7A9C0; --accent-soft: #3D2029; --on-accent: #2A0E17;
+  --leaf: #7FCB98; --leaf-soft: #1D3325; --warm: #F29A72; --warm-soft: #3B2318; --gold: #E0B653; --gold-soft: #33290F;
+  --danger: #F2938B; --danger-soft: #3D1A17; --husband: #8DB6EE; --wife: #F28DAC;
+  --hero: linear-gradient(135deg, #3B1E28 0%, #3A2620 55%, #1C2E22 100%);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 28px -18px rgba(0, 0, 0, .8);
   color-scheme: dark;
 }
 
@@ -214,3 +221,61 @@ input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px s
 .toast { position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; z-index: 30; font-weight: 600; font-size: 14px; max-width: 90vw; }
 
 @media (prefers-reduced-motion: reduce) { .breath { transition: none; } }
+
+/* ───────── v2: 사랑 넘치는 디자인 */
+.card.leaf { background: var(--leaf-soft); border-color: transparent; box-shadow: none; }
+.hero { background: var(--hero); border-radius: 24px; padding: 18px 16px 16px; margin-bottom: 12px; position: relative; overflow: hidden; }
+.hero::after { content: '♥'; position: absolute; right: -6px; top: -18px; font-size: 110px; color: var(--accent); opacity: .08; line-height: 1; pointer-events: none; }
+.hero .speech .bubble { background: color-mix(in srgb, var(--surface) 92%, transparent); }
+.hero .couple { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 10px; flex-wrap: wrap; }
+.hero .couple .heart { color: var(--accent); animation: beat 1.6s ease-in-out infinite; display: inline-block; }
+.hero .dcount { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--ink-2); background: color-mix(in srgb, var(--surface) 70%, transparent); padding: 3px 10px; border-radius: 999px; }
+@keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+
+.say { flex: none; border: 0; background: var(--accent-soft); color: var(--accent); border-radius: 999px; min-width: 40px; height: 40px; padding: 0 12px; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.say.on { background: var(--accent); color: var(--on-accent); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 8px transparent; } }
+.titlerow { display: flex; align-items: center; gap: 8px; }
+.titlerow > :first-child { flex: 1; min-width: 0; }
+
+.mission { display: flex; gap: 12px; align-items: center; }
+.mission .big { font-size: 34px; flex: none; }
+.mission.done { opacity: .85; }
+.mission.done .mt { text-decoration: line-through; text-decoration-color: var(--accent); }
+
+.bank { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--surface-2); margin: 8px 0 4px; }
+.bank i { display: block; height: 100%; }
+.bank .pos { background: var(--accent); }
+.bank .neg { background: var(--ink-3); }
+
+.stage { position: relative; padding-left: 52px; margin-bottom: 14px; }
+.stage::before { content: ''; position: absolute; left: 21px; top: 44px; bottom: -14px; width: 2px; background: var(--line); }
+.stage:last-child::before { display: none; }
+.stage .badge { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.stage.now .badge { border-color: var(--accent); background: var(--accent-soft); }
+.stage.clear .badge { border-color: var(--leaf); background: var(--leaf-soft); }
+.stage .card { margin-bottom: 0; }
+
+.letter { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; position: relative; }
+.letter.from-h { border-left: 4px solid var(--husband); }
+.letter.from-w { border-left: 4px solid var(--wife); }
+.letter .meta { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; }
+.letter .body { margin: 4px 0 6px; font-size: 15px; }
+.heartbtn { border: 0; background: transparent; font-size: 20px; padding: 2px 6px; min-height: 36px; }
+.tpls { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 8px; scrollbar-width: none; }
+.tpls button { flex: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+
+.kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kpi div { background: var(--surface-2); border-radius: 14px; padding: 10px 6px; text-align: center; }
+.kpi b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 11px; color: var(--ink-2); }
+.verdict { border-radius: 14px; padding: 10px 12px; font-size: 14px; margin-top: 10px; }
+.verdict.ok { background: var(--leaf-soft); }
+.verdict.warn { background: var(--gold-soft); }
+.verdict.stop { background: var(--danger-soft); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.switch input { width: 46px; height: 26px; accent-color: var(--accent); }
+.daycell.done { background: var(--accent); border-color: var(--accent); }
+.daycell.half { background: var(--accent-soft); }
+.tabs button.on { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .hero .couple .heart, .say.on { animation: none; } }
