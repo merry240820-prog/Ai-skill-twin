@@ -2,6 +2,7 @@ name: 개굴씨 APK 빌드
 
 on:
   push:
+    branches: ['**']
     paths:
       - 'couple-app/**'
       - '.github/workflows/couple-apk.yml'
