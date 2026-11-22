@@ -34,7 +34,13 @@
 - **각자 폰**: 도구 → 동기화에서 "기록 코드 만들기" → 카톡으로 보내기 → 상대가 "합치기".
   서버가 없어서 모든 기록은 폰 안에만 있고, 같은 항목은 더 나중에 수정한 쪽이 남습니다.
 
-## APK 받기 (GitHub Actions)
+## APK 받기
+
+📱 **폰에서 바로 받기:** https://github.com/merry240820-prog/Ai-skill-twin/releases/download/couple-latest/gaegul-couple.apk
+
+푸시할 때마다 자동으로 새로 빌드되어 같은 주소로 갱신됩니다.
+
+### 빌드 방식 (GitHub Actions)
 
 `couple-app/` 아래가 바뀌어 푸시되면 **Actions → 개굴씨 APK 빌드**가 자동 실행됩니다.
 
