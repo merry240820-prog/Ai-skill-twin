@@ -24,6 +24,10 @@
       rules3: { h: null, w: null },
       plan: {},
       goals: {},
+      baby: { birth: '', ts: 0 },
+      short: false,
+      epds: [],
+      signs: { checked: {}, ts: 0 },
       voice: { on: true, rate: 0.92, pitch: 1.02, voice: null, auto: true, breath: true },
       money: { rules: { limit: 30, wait: 24, allowH: 20, allowW: 20, goal: '', ts: 0 }, log: [] },
       messages: [],
@@ -41,6 +45,8 @@
         pledge: Object.assign(b.pledge, s.pledge),
         rules3: Object.assign(b.rules3, s.rules3),
         voice: Object.assign(b.voice, s.voice),
+        baby: Object.assign(b.baby, s.baby),
+        signs: Object.assign(b.signs, s.signs),
         money: { rules: Object.assign(b.money.rules, s.money && s.money.rules), log: (s.money && s.money.log) || [] },
         ll: Object.assign(b.ll, s.ll)
       });
@@ -100,6 +106,11 @@
     if (navigator.vibrate) navigator.vibrate([200, 120, 200]);
   }
 
+  function frame() { return st.short ? D.STEP_FRAME_SHORT : D.STEP_FRAME; }
+  const totalMin = () => frame().reduce((a, x) => a + x.m, 0);
+  function babyDays() { if (!st.baby.birth) return null; return Math.floor((parseYmd(ymd()) - parseYmd(st.baby.birth)) / DAY_MS) + 1; }
+  function lastEpds() { return st.epds.slice().sort((a, b) => b.at - a.at)[0] || null; }
+
   function currentDay() {
     if (!st.startDate) return 1;
     const diff = Math.floor((parseYmd(ymd()) - parseYmd(st.startDate)) / DAY_MS);
@@ -151,7 +162,7 @@
     $('#whoBtn').innerHTML = `<span class="dot ${p}"></span>${esc(name(p))} 사용 중 ▾`;
     sayReg = []; sayingBtn = null;
     const v = $('#view');
-    v.innerHTML = ({ home: viewHome, program: viewProgram, saju: viewSaju, love: viewLove, tools: viewTools })[tab]();
+    v.innerHTML = ({ home: viewHome, program: viewProgram, mom: viewMom, love: viewLove, tools: viewTools })[tab]();
     afterRender();
   }
   function afterRender() { if (session.day && tab === 'program' && sub.program && sub.program.day === session.day) paintSession(); }
@@ -204,6 +215,7 @@
         <div class="speech">${frog(greet[0], 70)}<div class="bubble">${esc(greet[1])}</div>${sayBtn(greet[1])}</div>
       </div>
       ${rulesBanner()}
+      ${momCard()}
 
       <div class="card">
         <div class="row"><span class="chip">${day.w}주차 · ${esc(D.WEEKS[day.w - 1].t)}</span><span class="grow"></span>
@@ -268,7 +280,8 @@
   function programDays() {
     const cur = currentDay();
     return `
-      <p class="muted small">매일 30분 · 체크인 5분 → 배우기 7분 → 함께 연습 13분 → 마무리 5분. 각 단계는 아나운서 음성으로 안내돼요.</p>
+      <p class="muted small">매일 ${totalMin()}분 · ${frame().map(x => `${x.t} ${x.m}분`).join(' → ')}. 각 단계는 아나운서 음성으로 안내돼요.</p>
+      <label class="switch"><span class="small"><b>👶 신생아 모드 (하루 10분)</b><br><span class="tiny">출산 후 100일까지는 짧게 해도 충분해요. 꾸준함이 길이보다 중요해요.</span></span><input type="checkbox" data-short="1" ${st.short ? 'checked' : ''}></label>
       <div class="card soft small">시작일 ${st.startDate || '-'} · 오늘은 <b>Day ${cur}</b>. 하루를 놓쳐도 괜찮아요. 순서대로 이어서 하면 됩니다.</div>
       ${D.WEEKS.map(w => {
         const days = D.DAYS.map((d, i) => ({ d, n: i + 1 })).filter(x => x.d.w === w.n);
@@ -285,6 +298,7 @@
   // 로드맵
   function planDone(it) {
     if (it.auto === 'rules3') return !!(st.rules3.h && st.rules3.w);
+    if (it.auto === 'epds') { const l = lastEpds(); return !!(l && now() - l.at < 15 * DAY_MS); }
     if (it.auto === 'll') return !!(st.ll.h && st.ll.h.done && st.ll.w && st.ll.w.done);
     return !!(st.plan[it.id] && st.plan[it.id].done);
   }
@@ -378,41 +392,41 @@
 
   // 세션 타이머 (메모리)
   const session = { day: null, idx: 0, left: 0, running: false, iv: null };
-  function sessionSteps() { return D.STEP_FRAME; }
+  function sessionSteps() { return frame(); }
   function stepNarration(n, i) {
-    const d = D.DAYS[n - 1], s = D.STEP_FRAME[i];
+    const d = D.DAYS[n - 1], s = frame()[i];
     const body = { checkin: '', learn: d.learn, practice: d.ex, close: '오늘의 약속. ' + d.promise }[s.k];
     return [`${i + 1}단계, ${s.t}. ${s.m}분입니다.`, s.d, body];
   }
   function startSession(n) {
-    const fresh = session.day !== n || (session.idx === 0 && session.left === D.STEP_FRAME[0].m * 60);
-    if (session.day !== n) { session.day = n; session.idx = 0; session.left = D.STEP_FRAME[0].m * 60; }
-    if (fresh && st.voice.auto) narrate([`${n}일차, ${D.DAYS[n - 1].t}. 지금부터 30분 과정을 시작할게요.`, ...stepNarration(n, 0)]);
+    const fresh = session.day !== n || (session.idx === 0 && session.left === frame()[0].m * 60);
+    if (session.day !== n) { session.day = n; session.idx = 0; session.left = frame()[0].m * 60; }
+    if (fresh && st.voice.auto) narrate([`${n}일차, ${D.DAYS[n - 1].t}. 지금부터 ${totalMin()}분 과정을 시작할게요.`, ...stepNarration(n, 0)]);
     session.running = true; clearInterval(session.iv);
     session.iv = setInterval(tick, 1000); paintSession();
   }
   function pauseSession() { session.running = false; clearInterval(session.iv); paintSession(); }
   function nextStep() {
-    if (session.idx < D.STEP_FRAME.length - 1) {
-      session.idx++; session.left = D.STEP_FRAME[session.idx].m * 60;
+    if (session.idx < frame().length - 1) {
+      session.idx++; session.left = frame()[session.idx].m * 60;
       if (st.voice.auto) narrate(stepNarration(session.day, session.idx));
     } else {
-      session.left = 0; pauseSession(); toast('30분 과정 끝! 일지를 적고 완료를 눌러주세요.');
-      if (st.voice.auto) narrate('30분 과정이 모두 끝났어요. 오늘도 같은 편이 되어 준 서로에게 고맙다고 말해 주세요. 그리고 일지를 적고 완료를 눌러 주세요.');
+      session.left = 0; pauseSession(); toast('오늘 과정 끝! 일지를 적고 완료를 눌러주세요.');
+      if (st.voice.auto) narrate('오늘 과정이 모두 끝났어요. 오늘도 같은 편이 되어 준 서로에게 고맙다고 말해 주세요. 그리고 일지를 적고 완료를 눌러 주세요.');
     }
     paintSession();
   }
   function tick() {
     if (!session.running) return;
     session.left--;
-    if (session.left <= 0) { beep(session.idx === D.STEP_FRAME.length - 1 ? 3 : 2); nextStep(); return; }
+    if (session.left <= 0) { beep(session.idx === frame().length - 1 ? 3 : 2); nextStep(); return; }
     paintSession();
   }
   function paintSession() {
     const box = $('#sessBox'); if (!box || !sub.program || sub.program.day !== session.day) return;
-    const s = D.STEP_FRAME[session.idx];
-    const total = D.STEP_FRAME.reduce((a, x) => a + x.m * 60, 0);
-    const passed = D.STEP_FRAME.slice(0, session.idx).reduce((a, x) => a + x.m * 60, 0) + (s.m * 60 - session.left);
+    const s = frame()[session.idx];
+    const total = frame().reduce((a, x) => a + x.m * 60, 0);
+    const passed = frame().slice(0, session.idx).reduce((a, x) => a + x.m * 60, 0) + (s.m * 60 - session.left);
     $('#sessStep').textContent = `${session.idx + 1}/4 · ${s.t}`;
     $('#sessTime').textContent = fmtTime(Math.max(0, session.left));
     $('#sessBar').style.width = Math.min(100, passed / total * 100) + '%';
@@ -437,15 +451,16 @@
       <h1>Day ${n}. ${esc(d.t)}</h1>
       <div class="speech" style="margin-bottom:12px">${frog(n === 30 ? 'cheer' : 'happy', 64)}<div class="bubble">${esc(d.frog)}</div>${sayBtn(d.frog)}</div>
 
+      <label class="switch" style="border:0;padding:0 0 8px"><span class="small"><b>👶 신생아 모드 (하루 10분)</b> · 아기를 안고도 할 수 있게 짧게</span><input type="checkbox" data-short="1" ${st.short ? 'checked' : ''}></label>
       <div class="card" id="sessBox">
-        <div class="row"><b id="sessStep">${active ? '' : '1/4 · 체크인'}</b><span class="grow"></span><span class="tiny">총 30분 · ${st.voice.auto ? '🔊 단계 음성 안내 켜짐' : '음성 안내 꺼짐'}</span></div>
-        <div class="timer" id="sessTime">${active ? '' : '05:00'}</div>
+        <div class="row"><b id="sessStep">${active ? '' : '1/4 · ' + frame()[0].t}</b><span class="grow"></span><span class="tiny">총 ${totalMin()}분 · ${st.voice.auto ? '🔊 단계 음성 안내 켜짐' : '음성 안내 꺼짐'}</span></div>
+        <div class="timer" id="sessTime">${active ? '' : fmtTime(frame()[0].m * 60)}</div>
         <div class="progress"><i id="sessBar" style="width:0"></i></div>
         <div class="row" style="margin-top:10px"><button class="btn primary grow" id="sessToggle" data-act="sessToggle" data-n="${n}">시작</button><button class="btn" data-act="sessNext" data-n="${n}">다음 단계 →</button></div>
       </div>
 
       <div class="card steps">
-        ${D.STEP_FRAME.map((s, i) => `<div class="step"><div class="n">${i + 1}</div><div class="grow">
+        ${frame().map((s, i) => `<div class="step"><div class="n">${i + 1}</div><div class="grow">
           <h3>${esc(s.t)} <span class="tiny">${s.m}분</span></h3><p class="small muted" style="margin:0">${esc(s.d)}</p>${stepBody(s.k)}</div></div>`).join('')}
       </div>
 
@@ -468,6 +483,108 @@
         ${n > 1 ? `<button class="btn ghost" data-act="openDay" data-n="${n - 1}">← Day ${n - 1}</button>` : '<span></span>'}
         ${n < 30 ? `<button class="btn ghost" data-act="openDay" data-n="${n + 1}">Day ${n + 1} →</button>` : ''}
       </div>`;
+  }
+
+  // ───────────────────────── 산후 케어
+  function epdsLevel(r) {
+    if (r.urgent) return ['stop', '긴급', '스스로를 해치고 싶은 생각이 있었다고 답했어요. 점수와 상관없이 오늘 바로 도움을 받아야 해요. 109(24시간) 또는 1577-0199에 전화하고, 혼자 있지 않게 해 주세요.'];
+    if (r.score >= 13) return ['stop', '높음', '산후우울증 가능성이 높아요. 이번 주 안에 보건소·정신건강복지센터·병원 상담을 받아 주세요. 치료하면 좋아지는 병이에요.'];
+    if (r.score >= 10) return ['warn', '주의', '산후우울 가능성이 있어요. 보건소에서 무료 상담을 받아 보고, 2주 뒤 다시 점검해요. 잠과 휴식을 최우선으로.'];
+    return ['ok', '양호', '지금은 비교적 괜찮아요. 출산 후 1년까지는 언제든 달라질 수 있으니 2주마다 점검해요.'];
+  }
+  function momCard() {
+    const bd = babyDays(), l = lastEpds(), p = me();
+    const r = dailyRec(ymd(), 'h'), care = D.CARE.filter(c => r['care_' + c.id]).length;
+    const due = !l || now() - l.at > 14 * DAY_MS;
+    if (!bd) return `<button class="card leaf" style="width:100%;text-align:left" data-act="goMom"><b>🤱 산후 케어</b><br><span class="small">막내 출생일을 넣으면 회복 단계에 맞춰 도와드려요.</span></button>`;
+    return `<div class="card leaf">
+      <div class="titlerow"><h3>🤱 막내 태어난 지 ${bd}일째</h3><button class="btn ghost small" data-act="goMom">산후 케어 ›</button></div>
+      <p class="small" style="margin:4px 0 8px">${bd <= 14 ? '산후 2주 안쪽: 감정 기복(베이비 블루스)이 흔한 시기예요.' : bd <= 56 ? '산후 회복기(6~8주): 2주가 지나도 우울·짜증이 이어지면 산후우울증을 점검할 때예요.' : '출산 후 1년까지는 산후우울이 올 수 있어요. 2주마다 마음 점검을 이어가요.'}</p>
+      <div class="row small"><span class="chip ${care >= 4 ? 'ok' : ''}">${esc(name('h'))}의 오늘 돌봄 ${care}/${D.CARE.length}</span>
+        <span class="chip ${l && !due ? 'ok' : ''}">${l ? `마음 점검 ${fmtDate(l.at).split(' ')[0]} · ${epdsLevel(l)[1]}` : '마음 점검 전'}</span></div>
+      ${due ? `<button class="btn primary block" style="margin-top:10px" data-act="goMom" data-k="check">${esc(name('w'))}의 마음 점검하기 (2분)</button>` : ''}
+    </div>`;
+  }
+  function viewMom() {
+    const sm = sub.mom || (sub.mom = { k: me() === 'h' ? 'care' : 'check' });
+    const segs = [['check', '마음 점검'], ['care', '남편 돌봄'], ['clear', '또렷하게'], ['know', '알아두기']];
+    const seg = `<div class="seg">${segs.map(([k, t]) => `<button class="${sm.k === k ? 'on' : ''}" data-act="momSeg" data-k="${k}">${t}</button>`).join('')}</div>`;
+    const bd = babyDays();
+    const emergency = `<div class="card danger small"><b>바로 도움이 필요할 때</b> — 스스로나 아기를 해칠 것 같은 생각, 환청·혼란, 며칠째 전혀 못 잠.<br>혼자 두지 말고 바로 연락하세요.
+      <div class="row" style="margin-top:8px"><a class="btn" href="tel:109">109</a><a class="btn" href="tel:15770199">1577-0199</a><a class="btn" href="tel:119">119</a></div></div>`;
+    const body = { check: momCheck, care: momCare, clear: momClear, know: momKnow }[sm.k]();
+    return `<h1>🤱 산후 케어</h1>
+      <div class="card"><div class="grid2">
+        <label class="field" style="margin:0"><span>막내 출생일</span><input type="date" data-baby="birth" value="${esc(st.baby.birth)}"></label>
+        <div class="stat" style="align-self:center"><b>${bd ? bd + '일째' : '-'}</b><span>${bd ? (bd <= 42 ? '산욕기 (회복 최우선)' : '산후 회복 중') : '출생일을 넣어 주세요'}</span></div></div></div>
+      ${seg}${body}${emergency}`;
+  }
+  function momCheck() {
+    const sm = sub.mom, ans = sm.ans || (sm.ans = Array(D.EPDS.length).fill(null));
+    const i = ans.findIndex(a => a == null);
+    let quiz;
+    if (sm.result) {
+      const r = sm.result, lv = epdsLevel(r);
+      quiz = `<div class="card"><div class="titlerow"><h3>점검 결과 · ${r.score}점 / 30</h3>${sayBtn(`마음 점검 결과는 ${r.score}점, ${lv[1]}입니다. ${lv[2]}`)}</div>
+        <div class="verdict ${lv[0]}"><b>${lv[1]}</b><br>${esc(lv[2])}</div>
+        <p class="tiny" style="margin-top:8px">에든버러 산후우울 척도(EPDS)를 참고한 자가 점검이에요. 진단이 아니에요. 한국에서는 보통 10점 이상이면 상담을 권해요.</p>
+        ${r.saved ? '<p class="small">저장했어요.</p>' : `<div class="grid2"><button class="btn primary" data-act="epdsSave" data-share="1">저장 (남편과 공유)</button><button class="btn" data-act="epdsSave" data-share="0">나만 보기로 저장</button></div>`}
+        <button class="btn ghost block" style="margin-top:8px" data-act="epdsRestart">다시 하기</button></div>`;
+    } else if (i >= 0) {
+      const q = D.EPDS[i];
+      quiz = `<div class="card">
+        <div class="row"><b>지난 7일 동안</b><span class="grow"></span><span class="tiny">${i + 1}/${D.EPDS.length}</span></div>
+        <div class="progress" style="margin:8px 0 12px"><i style="width:${i / D.EPDS.length * 100}%"></i></div>
+        <div class="titlerow"><h3>${esc(q.q)}</h3>${sayBtn(`지난 7일 동안, ${q.q}. ${q.o.map(x => x[0]).join(', ')}`)}</div>
+        ${q.o.map(([t, sc]) => `<button class="qopt" data-act="epdsAns" data-i="${i}" data-s="${sc}">${esc(t)}</button>`).join('')}
+        ${i ? '<button class="btn ghost" data-act="epdsBack">← 이전</button>' : ''}
+        <p class="tiny">${esc(name('w'))}가 직접, 편하게 답해 주세요. 정답은 없어요.</p></div>`;
+    }
+    const hist = st.epds.slice().sort((a, b) => b.at - a.at).slice(0, 6);
+    const signs = st.signs.checked || {};
+    const sc = D.PPD_SIGNS.filter((x, k) => signs[k]).length, urgentSign = D.PPD_SIGNS.some((x, k) => x.urgent && signs[k]);
+    return `
+      <div class="speech card soft" style="margin-bottom:12px">${frog('calm', 56)}<div class="bubble small">${esc(name('w'))}, 두 아이를 품고 키우느라 정말 애쓰고 있어. 이 점검은 엄마를 평가하는 게 아니라, 도움이 필요한 때를 놓치지 않으려는 거야.</div></div>
+      ${quiz || ''}
+      ${hist.length ? `<div class="card"><h3>점검 기록</h3>${hist.map(r => { const lv = epdsLevel(r); return `<div class="check" style="justify-content:space-between"><span class="small">${fmtDate(r.at)} · ${esc(name(r.by))}${r.share ? '' : ' · 🔒나만 보기'}</span><span class="chip ${lv[0] === 'ok' ? 'ok' : ''}">${r.score}점 · ${lv[1]}</span></div>`; }).join('')}</div>` : ''}
+      <h2>${esc(name('h'))}가 옆에서 보는 신호</h2>
+      <div class="card">
+        ${D.PPD_SIGNS.map((x, k) => `<label class="check"><input type="checkbox" data-sign="${k}" ${signs[k] ? 'checked' : ''}><span class="small">${x.urgent ? '⚠️ ' : ''}${esc(x.t)}</span></label>`).join('')}
+        <div class="verdict ${urgentSign ? 'stop' : sc >= 3 ? 'warn' : 'ok'}">${urgentSign ? '⚠️ 응급 신호가 있어요. 오늘 바로 109 · 1577-0199 · 119에 연락하고, 아내를 혼자 두지 마세요.' : sc >= 3 ? `신호 ${sc}개. 2주 넘게 이어진다면 "같이 보건소 가 볼까? 내가 예약할게"라고 먼저 제안해 주세요.` : `신호 ${sc}개. 지금처럼 잠과 휴식을 챙겨 주세요.`}</div>
+      </div>`;
+  }
+  function momCare() {
+    const r = dailyRec(ymd(), 'h');
+    const past = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return ymd(d); });
+    const week = past.reduce((t, d) => t + D.CARE.filter(c => st.daily[d] && st.daily[d].h && st.daily[d].h['care_' + c.id]).length, 0);
+    const done = D.CARE.filter(c => r['care_' + c.id]).length;
+    return `
+      <div class="hero"><div class="speech">${frog(done >= 5 ? 'cheer' : 'happy', 60)}<div class="bubble small">${esc(name('h'))}, 지금 ${esc(name('w'))}에게 가장 필요한 건 "뭐 도와줄까?"가 아니라 <b>묻기 전에 맡아서 끝내는 것</b>이야. 오늘 ${done}개 했어!</div>${sayBtn(`${name('h')}님, 오늘의 돌봄입니다. ${D.CARE.map(c => c.t).join('. ')}.`)}</div></div>
+      <div class="card">
+        ${D.CARE.map(c => `<label class="check" style="align-items:flex-start"><input type="checkbox" data-care="${c.id}" ${r['care_' + c.id] ? 'checked' : ''} style="margin-top:3px"><span><b class="small">${esc(c.t)}</b><br><span class="tiny">${esc(c.why)}</span></span></label>`).join('')}
+        <p class="tiny" style="margin-top:8px">최근 7일 돌봄 ${week}회 · ${esc(name('h'))} 폰에서 체크하세요.</p>
+      </div>
+      <h2>${esc(name('w'))}에게 이렇게 말해 보세요</h2>
+      <div class="card">${D.PPD_SAY.map(t => `<div class="check" style="justify-content:space-between"><span class="small">${esc(t)}</span>${sayBtn(t.replace(/"/g, ''))}</div>`).join('')}</div>
+      <div class="card warm small"><b>산후 기간에도 3대 규칙은 그대로예요.</b> 수면 부족과 산후우울은 분노를 키울 수 있어요. 이해하되, 욕설·협박·동의 없는 신체접촉은 "멈춤"으로 분리하고, 동시에 치료를 돕는 것. 둘 다 해야 해요.</div>`;
+  }
+  function momClear() {
+    return `
+      <div class="speech card soft" style="margin-bottom:12px">${frog('happy', 56)}<div class="bubble small">두리뭉실한 말은 듣는 사람에게 "결국 내가 다 챙겨야 하네"로 들려. 특히 산후엔 생각할 여유가 없어서 <b>언제 · 무엇을 · 누가</b>가 분명한 말이 사랑이야.</div></div>
+      <div class="card">${D.VAGUE.map(([a, b]) => `<div class="dont"><div class="x">✕ ${esc(a)}</div><div class="o">→ ${esc(b)}</div></div>`).join('')}
+        <div style="margin-top:10px">${sayBtn(['두리뭉실 대신 또렷하게.', ...D.VAGUE.map(([a, b]) => `${a.replace(/"/g, '')} 대신, ${b.replace(/"/g, '')}`)], '전체 듣기')}</div></div>
+      <div class="card"><h3>오늘의 연습</h3><ol class="list small">
+        <li>위에서 내가 자주 쓰는 말 하나를 고른다.</li><li>오늘 그 말이 나오려 할 때 오른쪽 문장으로 바꿔 말한다 (3번).</li>
+        <li>하루에 하나는 내가 먼저 정해서 제안한다. 예: "이번 주 토요일 오전엔 내가 두 아이 데리고 나갈게."</li>
+        <li>"싫다"는 웃지 않고 한 번에 분명히. 그게 상대를 존중하는 방법이에요.</li></ol>
+        <p class="tiny">홈의 오늘의 지킴이 "또렷하게 말하기"에 체크해요.</p></div>`;
+  }
+  function momKnow() {
+    return `
+      <div class="row" style="margin-bottom:10px">${sayBtn([...D.PPD_FACTS.map(f => `${f.t}. ${f.d}`), '도움받을 곳.', ...D.PPD_HELP.map(h => `${h.t}. ${h.d}`)], '전체 듣기')}</div>
+      ${D.PPD_FACTS.map(f => `<div class="card"><h3>${esc(f.t)}</h3><p class="small" style="margin:0">${esc(f.d)}</p></div>`).join('')}
+      <h2>도움받을 곳 (무료·저렴)</h2>
+      <div class="card">${D.PPD_HELP.map(h => `<div class="dont"><b>${esc(h.t)}</b><div class="small">${esc(h.d)}</div></div>`).join('')}</div>`;
   }
 
   // ───────────────────────── 사주
@@ -660,8 +777,10 @@
   function viewTools() {
     const ts = sub.tools || (sub.tools = { open: null });
     const item = (k, ico, t, d) => `<button class="card row" style="width:100%;text-align:left" data-act="toolOpen" data-k="${k}"><span style="font-size:26px">${ico}</span><span class="grow"><b>${t}</b><br><span class="tiny">${d}</span></span><span>›</span></button>`;
+    if (ts.open === 'saju') return `<button class="btn ghost" data-act="toolOpen" data-k="">← 도구</button>` + viewSaju();
     if (ts.open) return toolDetail(ts.open);
     return `<h1>도구</h1>
+      ${item('saju', '☯️', '사주팔자', '생년월일시로 사주 · 오행 · 부부 궁합')}
       ${item('rules', '🛑', '우리 3대 규칙', '욕설·협박 0 · 동의 없는 신체접촉 0 · 멈춤=10분 분리')}
       ${item('pledge', '📜', '하지 않기 서약', '욕·부수기·버리기·탓하기… 우리가 하지 않을 것')}
       ${item('money', '💳', '돈 대화', '비싼 물건 규칙 · 눈치 없이 묻는 법 · 구매 공유 카드')}
@@ -783,7 +902,7 @@
           <button class="btn block" data-act="saveStart">시작일 저장</button></div>
         <div class="card"><h3>화면 테마</h3><div class="seg">${[['auto', '자동'], ['light', '밝게'], ['dark', '어둡게']].map(([v, t]) => `<button class="${st.theme === v ? 'on' : ''}" data-act="theme" data-v="${v}">${t}</button>`).join('')}</div></div>
         <div class="card danger"><h3>모든 기록 지우기</h3><p class="small">이 폰의 모든 기록이 사라져요. 먼저 동기화 · 백업에서 코드를 만들어 두세요.</p><button class="btn block" data-act="reset">초기화</button></div>
-        <p class="tiny">개굴씨 부부연구소 v2.0 · 이 앱은 전문 상담을 대신하지 않아요. 어려움이 계속되면 부부상담 전문가와 함께하세요.</p>`;
+        <p class="tiny">개굴씨 부부연구소 v2.1 · 이 앱은 전문 상담을 대신하지 않아요. 어려움이 계속되면 부부상담 전문가와 함께하세요.</p>`;
     }
     return back;
   }
@@ -854,6 +973,8 @@
     Object.keys(r.daily || {}).forEach(d => { st.daily[d] = st.daily[d] || {}; P.forEach(p => { const v = newer(st.daily[d][p], r.daily[d][p]); if (v) st.daily[d][p] = v; }); });
     st.pledge.custom = Array.from(new Set([...(st.pledge.custom || []), ...((r.pledge && r.pledge.custom) || [])]));
     if (r.money) { st.money.rules = newer(st.money.rules, r.money.rules); st.money.log = unionById(st.money.log, r.money.log); }
+    st.baby = newer(st.baby, r.baby); st.signs = newer(st.signs, r.signs);
+    st.epds = unionById(st.epds, (r.epds || []).filter(x => x.share));
     Object.keys(r.plan || {}).forEach(k => { st.plan[k] = newer(st.plan[k], r.plan[k]); });
     Object.keys(r.goals || {}).forEach(w => { st.goals[w] = st.goals[w] || {}; P.forEach(p => { const v = newer(st.goals[w][p], r.goals[w][p]); if (v) st.goals[w][p] = v; }); });
     st.messages = unionById(st.messages, r.messages);
@@ -864,6 +985,20 @@
   // ───────────────────────── 이벤트
   const acts = {
     closeSheet,
+    goMom: (el) => { sub.mom = { k: el.dataset.k || (me() === 'h' ? 'care' : 'check') }; go('mom'); },
+    momSeg: (el) => { sub.mom = Object.assign(sub.mom || {}, { k: el.dataset.k }); render(); },
+    epdsAns: (el) => {
+      const sm = sub.mom; sm.ans[Number(el.dataset.i)] = Number(el.dataset.s);
+      if (sm.ans.every(a => a != null)) {
+        const score = sm.ans.reduce((a, b) => a + b, 0), urgent = sm.ans[9] > 0;
+        sm.result = { score, urgent, answers: sm.ans.slice() };
+        const lv = epdsLevel(sm.result); narrate(`점검이 끝났어요. ${score}점, ${lv[1]}입니다. ${lv[2]}`);
+      }
+      render();
+    },
+    epdsBack: () => { const sm = sub.mom; const i = sm.ans.findIndex(a => a == null); const j = (i < 0 ? sm.ans.length : i) - 1; if (j >= 0) sm.ans[j] = null; render(); },
+    epdsRestart: () => { sub.mom = { k: 'check' }; render(); },
+    epdsSave: (el) => { const r = sub.mom.result; st.epds.push({ id: uid(), at: now(), by: me(), score: r.score, urgent: r.urgent, share: el.dataset.share === '1' }); r.saved = true; save(); render(); toast('저장했어요'); },
     say: (el) => say(sayReg[Number(el.dataset.i)], el),
     progMode: (el) => { sub.program = { mode: el.dataset.k }; render(); },
     goWeekly: () => { sub.program = { mode: 'week' }; go('program'); },
@@ -881,7 +1016,7 @@
     openDay: (el) => { sub.program = { day: Number(el.dataset.n) }; go('program'); },
     backProgram: () => { sub.program = { mode: 'days' }; go('program'); },
     sessToggle: (el) => { const n = Number(el.dataset.n); if (session.day === n && session.running) pauseSession(); else startSession(n); },
-    sessNext: (el) => { const n = Number(el.dataset.n); if (session.day !== n) { session.day = n; session.idx = 0; session.left = D.STEP_FRAME[0].m * 60; } nextStep(); },
+    sessNext: (el) => { const n = Number(el.dataset.n); if (session.day !== n) { session.day = n; session.idx = 0; session.left = frame()[0].m * 60; } nextStep(); },
     miniTimer: (el) => startMini(Number(el.dataset.m)),
     miniStop: () => { clearInterval(mini.iv); toast('타이머 정지'); },
     toggleDone: (el) => {
@@ -927,7 +1062,7 @@
       save(); render(); toast('공유했어요. 먼저 말해 준 것만으로 멋져요!');
     },
     buyReply: (el) => { const x = st.money.log.find(y => y.id === el.dataset.id); if (x) { x.reply = el.dataset.r; save(); render(); } },
-    exportCode: () => { const o = Object.assign({}, st); delete o.me; delete o.theme; delete o.voice; $('#codeOut').value = encode(o); toast('코드를 만들었어요'); },
+    exportCode: () => { const o = Object.assign({}, st); delete o.me; delete o.theme; delete o.voice; delete o.short; o.epds = (st.epds || []).filter(x => x.share); $('#codeOut').value = encode(o); toast('코드를 만들었어요'); },
     copyCode: async () => { const v = $('#codeOut').value; if (!v) return toast('먼저 코드를 만들어 주세요'); try { await navigator.clipboard.writeText(v); toast('복사했어요'); } catch (e) { $('#codeOut').select(); document.execCommand('copy'); toast('복사했어요'); } },
     shareCode: async () => { const v = $('#codeOut').value; if (!v) return toast('먼저 코드를 만들어 주세요'); if (navigator.share) { try { await navigator.share({ title: '개굴씨 기록 코드', text: v }); } catch (e) { /* 취소 */ } } else acts.copyCode(); },
     importCode: () => { try { merge(decode($('#codeIn').value)); toast('기록을 합쳤어요!'); render(); } catch (e) { toast('코드를 읽을 수 없어요: ' + e.message); } },
@@ -938,6 +1073,7 @@
     obDone: () => {
       [['h', '#obH'], ['w', '#obW']].forEach(([p, id]) => { const v = $(id).value.trim(); if (v) { st.profiles[p].name = v; st.profiles[p].ts = now(); } });
       st.startDate = $('#obStart').value || ymd();
+      const bb = $('#obBaby').value; if (bb) { st.baby = { birth: bb, ts: now() }; const bd = babyDays(); if (bd && bd <= 100) st.short = true; }
       st.me = document.querySelector('input[name=obMe]:checked').value;
       save(); closeSheet(); render();
     }
@@ -958,6 +1094,10 @@
   // 입력 저장 (input/change 위임)
   function onInput(e) {
     const el = e.target, p = me();
+    if (el.dataset.short) { st.short = el.checked; save(); if (session.day && !session.running) { session.day = null; } render(); toast(st.short ? '신생아 모드: 하루 10분' : '기본 모드: 하루 30분'); return; }
+    if (el.dataset.baby) { st.baby.birth = el.value; st.baby.ts = now(); if (e.type === 'change') { const bd = babyDays(); if (bd && bd <= 100 && !st.short) { st.short = true; toast('출산 100일 전이라 신생아 모드(10분)를 켰어요'); } save(); render(); } else save(); return; }
+    if (el.dataset.care) { const r = dailyRec(ymd(), 'h'); r['care_' + el.dataset.care] = el.checked; r.ts = now(); save(); if (e.type === 'change') render(); return; }
+    if (el.dataset.sign) { st.signs.checked[el.dataset.sign] = el.checked; st.signs.ts = now(); save(); if (e.type === 'change') render(); return; }
     if (el.dataset.plan) { st.plan[el.dataset.plan] = { done: el.checked, ts: now() }; save(); if (e.type === 'change') render(); return; }
     if (el.dataset.goal) { const [w, gp] = el.dataset.goal.split('.'); st.goals[w] = st.goals[w] || {}; st.goals[w][gp] = { text: el.value, ts: now() }; save(); return; }
     if (el.dataset.vs) {
@@ -1006,6 +1146,7 @@
       <div class="grid2"><label class="field"><span>남편 호칭</span><input type="text" id="obH" placeholder="남편" maxlength="12"></label>
       <label class="field"><span>아내 호칭</span><input type="text" id="obW" placeholder="아내" maxlength="12"></label></div>
       <label class="field"><span>30일 과정 시작일</span><input type="date" id="obStart" value="${ymd()}"></label>
+      <label class="field"><span>막내 출생일 (출산 후라면, 선택)</span><input type="date" id="obBaby"></label>
       <p class="small" style="font-weight:700;margin-bottom:4px">이 폰은 누가 주로 쓰나요?</p>
       <div class="grid2"><label class="check"><input type="radio" name="obMe" value="h" checked><span>남편</span></label><label class="check"><input type="radio" name="obMe" value="w"><span>아내</span></label></div>
       <div class="card soft small" style="margin-top:10px">모든 기록은 이 폰 안에만 저장돼요. 각자 폰에 설치했다면 도구 → 동기화로 기록을 합칠 수 있어요.</div>
