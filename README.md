@@ -1,4 +1,4 @@
-> 이 저장소에는 앱이 두 개 있습니다: 토익스피킹 트레이너(루트 `index.html`)와 🐸 [개굴씨 부부연구소](couple-app/README.md)(`couple-app/`, Android APK).
+> 이 저장소에는 앱이 두 개 있습니다: 토익스피킹 트레이너(루트 `index.html`)와 [해해](couple-app/README.md)(`couple-app/`, Android APK).
 
 # 토익스피킹 30일 트레이너
 

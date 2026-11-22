@@ -1,4 +1,4 @@
-/* 개굴씨 부부연구소 — 메인 앱 */
+/* 해해 — 메인 앱 */
 (function () {
   'use strict';
   const D = window.DATA, S = window.Saju;
@@ -157,7 +157,6 @@
     render(); window.scrollTo(0, 0);
   }
   function render() {
-    $('#brandFrog').innerHTML = frog('happy', 28);
     const p = me();
     $('#whoBtn').innerHTML = `<span class="dot ${p}"></span>${esc(name(p))} 사용 중 ▾`;
     sayReg = []; sayingBtn = null;
@@ -206,7 +205,7 @@
     const unread = st.messages.filter(m => m.from === o && !m.heart).length;
     const greet = kept >= 6 ? ['cheer', `와, 오늘 약속을 ${kept}개나 지켰어! 정말 잘하고 있어.`]
       : isDone(n, p) ? ['love', `오늘 과정 완료! ${name(o)}에게 고마운 점 하나 편지로 남겨 볼까?`]
-        : ['happy', `안녕, ${name(p)}! 오늘은 Day ${n}, "${day.t}" 차례야. 둘이 30분, 같은 편이 되어 앉아 보자.`];
+        : ['happy', `안녕, ${name(p)}! 오늘은 Day ${n}, "${day.t}" 차례야. 둘이 ${totalMin()}분, 같은 편이 되어 앉아 보자.`];
     const ms = missionFor(p), md = !!r.mission;
     const bank = weekStats(weekOf(today));
     return `
@@ -223,7 +222,7 @@
           <span class="chip ${isDone(n, 'w') ? 'ok' : ''}"><span class="dot w"></span>${esc(name('w'))}</span></div>
         <h1>Day ${n}. ${esc(day.t)}</h1>
         <p class="muted small">오늘의 약속 · ${esc(day.promise)}</p>
-        <button class="btn primary block" data-act="openDay" data-n="${n}">오늘 30분 과정 시작하기 →</button>
+        <button class="btn primary block" data-act="openDay" data-n="${n}">오늘 ${totalMin()}분 과정 시작하기 →</button>
         <div class="progress" style="margin-top:12px" aria-label="30일 진행률"><i style="width:${Math.round(doneBoth / 30 * 100)}%"></i></div>
         <p class="tiny" style="margin:4px 0 0">둘 다 완료한 날 ${doneBoth}/30 · ${esc(name(p))} 약속 연속 ${streak(p)}일</p>
       </div>
@@ -640,7 +639,7 @@
         <button class="btn block" style="margin-top:8px" data-act="manualFromCalc" data-p="${p}">계산 결과를 직접 입력 칸에 복사</button>
       </details>
     </div>`;
-    if (!res) return out + `<div class="speech card soft">${frog('calm', 60)}<div class="bubble">생년월일을 넣으면 개굴씨가 여덟 글자를 뽑아 줄게!</div></div>`;
+    if (!res) return out + `<div class="speech card soft">${frog('calm', 60)}<div class="bubble">생년월일을 넣으면 여덟 글자를 뽑아 줄게요.</div></div>`;
     const dm = D.DAY_MASTER[res.dayMaster], el = res.dayMasterEl, info = D.EL_INFO[el];
     const missing = S.ELEMENTS.filter(e => res.count[e] === 0);
     const strong = S.ELEMENTS.filter(e => res.count[e] >= 3);
@@ -790,7 +789,7 @@
       ${item('sync', '🔄', '동기화 · 백업', '각자 폰 기록 합치기, 백업/복원')}
       ${item('voice', '🎙️', '음성 안내', '아나운서 목소리 · 속도 · 자동 안내')}
       ${item('settings', '⚙️', '설정', '이름 · 시작일 · 테마 · 초기화')}
-      ${st.timeouts.length ? `<p class="tiny">지금까지 개굴 타임 ${st.timeouts.length}회 — 멈춘 횟수만큼 관계를 지킨 거예요.</p>` : ''}`;
+      ${st.timeouts.length ? `<p class="tiny">지금까지 멈춤 타임 ${st.timeouts.length}회 — 멈춘 횟수만큼 관계를 지킨 거예요.</p>` : ''}`;
   }
   function toolDetail(k) {
     const back = `<button class="btn ghost" data-act="toolOpen" data-k="">← 도구</button>`;
@@ -875,12 +874,12 @@
       const cur = window.Voice && Voice.current;
       const avail = window.Voice && Voice.available();
       return `${back}<h1>🎙️ 음성 안내</h1>
-        <div class="speech card soft">${frog('happy', 56)}<div class="bubble small">과정 단계, 오늘의 약속, 3대 규칙, 개굴 타임 호흡을 차분한 아나운서 목소리로 읽어 줄게.</div></div>
+        <div class="speech card soft">${frog('happy', 56)}<div class="bubble small">과정 단계, 오늘의 약속, 3대 규칙, 멈춤 타임 호흡을 차분한 아나운서 목소리로 읽어 줄게.</div></div>
         ${!avail ? '<div class="card warm small">이 기기에서는 음성 기능을 쓸 수 없어요.</div>' : `
         <div class="card">
           <label class="switch"><span><b>음성 안내 켜기</b><br><span class="tiny">끄면 🔊 버튼을 직접 누를 때만 읽어요</span></span><input type="checkbox" data-vs="on" ${vs.on ? 'checked' : ''}></label>
           <label class="switch"><span><b>과정 단계 자동 안내</b><br><span class="tiny">30분 과정에서 단계가 바뀔 때마다 읽어 줘요</span></span><input type="checkbox" data-vs="auto" ${vs.auto ? 'checked' : ''}></label>
-          <label class="switch"><span><b>개굴 타임 호흡 안내</b><br><span class="tiny">"들이쉬고, 내쉬고"를 목소리로</span></span><input type="checkbox" data-vs="breath" ${vs.breath ? 'checked' : ''}></label>
+          <label class="switch"><span><b>멈춤 타임 호흡 안내</b><br><span class="tiny">"들이쉬고, 내쉬고"를 목소리로</span></span><input type="checkbox" data-vs="breath" ${vs.breath ? 'checked' : ''}></label>
         </div>
         <div class="card">
           <label class="field"><span>목소리 ${voices.length ? `(한국어 ${voices.length}개)` : ''}</span>
@@ -902,7 +901,7 @@
           <button class="btn block" data-act="saveStart">시작일 저장</button></div>
         <div class="card"><h3>화면 테마</h3><div class="seg">${[['auto', '자동'], ['light', '밝게'], ['dark', '어둡게']].map(([v, t]) => `<button class="${st.theme === v ? 'on' : ''}" data-act="theme" data-v="${v}">${t}</button>`).join('')}</div></div>
         <div class="card danger"><h3>모든 기록 지우기</h3><p class="small">이 폰의 모든 기록이 사라져요. 먼저 동기화 · 백업에서 코드를 만들어 두세요.</p><button class="btn block" data-act="reset">초기화</button></div>
-        <p class="tiny">개굴씨 부부연구소 v2.1.1 · 이 앱은 전문 상담을 대신하지 않아요. 어려움이 계속되면 부부상담 전문가와 함께하세요.</p>`;
+        <p class="tiny">해해 v2.1.1 · 이 앱은 전문 상담을 대신하지 않아요. 어려움이 계속되면 부부상담 전문가와 함께하세요.</p>`;
     }
     return back;
   }
@@ -915,13 +914,13 @@
       <p class="tiny">가까운 건강가정·다문화가족지원센터(가족센터)에서 무료 또는 저렴한 부부상담을 받을 수 있어요.</p>`;
   }
 
-  // ───────────────────────── 개굴 타임 (타임아웃)
+  // ───────────────────────── 멈춤 타임 (타임아웃)
   const to = { left: 0, iv: null, biv: null };
   function openTimeout() {
     st.timeouts.push({ id: uid(), by: me(), at: now() }); save();
     to.left = 10 * 60;
     openSheet(`
-      <div style="text-align:center">${frog('calm', 96)}<h1 style="margin-top:4px">개굴 타임</h1>
+      <div style="text-align:center">${frog('calm', 96)}<h1 style="margin-top:4px">멈춤 타임</h1>
         <p class="muted small">지금은 대화를 멈추고, 서로 다른 공간에서 몸을 진정시키는 시간이에요.<br>최소 10분, 따라가지 않고 각자 다른 공간에서. "멈춤"을 말한 사람이 돌아올 시간을 말해요.</p>
         <div class="breath" id="breath"><span class="breath-label" id="breathLabel">들이쉬고</span></div>
         <div class="timer" id="toTime">10:00</div><button class="btn ghost small" data-act="toMore">+10분 더</button></div>
@@ -935,7 +934,7 @@
       const el = $('#breath'), lb = $('#breathLabel'); if (!el) return; phase = 1 - phase; el.classList.toggle('in', phase === 1); lb.textContent = phase ? '들이쉬고' : '내쉬고';
       if (cueOn && st.voice.breath && cues < 12) { cues++; narrate(phase ? '천천히, 들이쉬고' : '길게, 내쉬고'); }
     };
-    narrate(['개굴 타임입니다.', '지금은 대화를 멈추고, 서로 다른 공간으로 가 주세요.', '따라가지 않고, 설명하지 않아도 괜찮아요.', '10분 동안, 원을 따라 천천히 숨을 쉬어요.'], { onend: () => { cueOn = true; } });
+    narrate(['멈춤 타임입니다.', '지금은 대화를 멈추고, 서로 다른 공간으로 가 주세요.', '따라가지 않고, 설명하지 않아도 괜찮아요.', '10분 동안, 원을 따라 천천히 숨을 쉬어요.'], { onend: () => { cueOn = true; } });
     b(); let t = 0;
     to.biv = setInterval(() => { t++; if ((phase === 1 && t >= 4) || (phase === 0 && t >= 6)) { t = 0; b(); } }, 1000);
     to.iv = setInterval(() => {
@@ -1010,7 +1009,7 @@
     heart: (el) => { const m = st.messages.find(x => x.id === el.dataset.id); if (m) { m.heart = !m.heart; save(); render(); if (m.heart) toast('마음을 받았어요 💗'); } },
     tpl: (el) => { const i = $('#msgIn'); if (!i) return; i.value = el.dataset.t; i.focus(); const k = i.value.indexOf('___'); if (k >= 0) i.setSelectionRange(k, k + 3); },
     quickLove: (el) => { st.messages.push({ id: uid(), from: me(), text: el.dataset.t, at: now() }); save(); toast(`${name(other(me()))}의 우체통에 넣었어요 💌`); },
-    voiceTest: () => say(`안녕하세요. 개굴씨 부부연구소입니다. ${name('h')}님, ${name('w')}님, 오늘도 같은 편이 되어 30분을 함께해 주셔서 고맙습니다.`, null, { force: true }),
+    voiceTest: () => say(`안녕하세요. 해해입니다. ${name('h')}님, ${name('w')}님, 오늘도 같은 편이 되어 30분을 함께해 주셔서 고맙습니다.`, null, { force: true }),
     voiceInstall: () => Voice.openInstall(),
     toMore: () => { to.left += 600; const el = $('#toTime'); if (el) el.textContent = fmtTime(to.left); },
     openDay: (el) => { sub.program = { day: Number(el.dataset.n) }; go('program'); },
@@ -1052,7 +1051,7 @@
     toolGo: (el) => { sub.tools = { open: el.dataset.k }; go('tools'); },
     sign3: (el) => { st.rules3[el.dataset.p] = { date: ymd(), ts: now() }; save(); render(); toast(st.rules3.h && st.rules3.w ? '둘 다 합의했어요. 오늘부터 시작이에요.' : '서명했어요'); },
     resign3: () => { if (!confirm('두 사람 서명을 모두 지우고 다시 서명할까요?')) return; P.forEach(p => { st.rules3[p] = null; }); save(); render(); },
-    sign: (el) => { st.pledge[el.dataset.p] = { date: ymd(), ts: now() }; save(); render(); toast('서명 완료! 개굴씨가 증인이야 🐸'); },
+    sign: (el) => { st.pledge[el.dataset.p] = { date: ymd(), ts: now() }; save(); render(); toast('서명 완료! 오늘부터 시작이에요'); },
     resign: () => { P.forEach(p => { st.pledge[p] = null; }); save(); render(); },
     addCustom: () => { const i = $('#customIn'); const t = i.value.trim(); if (!t) return; st.pledge.custom.push(t); save(); render(); },
     delCustom: (el) => { st.pledge.custom.splice(Number(el.dataset.i), 1); save(); render(); },
@@ -1064,7 +1063,7 @@
     buyReply: (el) => { const x = st.money.log.find(y => y.id === el.dataset.id); if (x) { x.reply = el.dataset.r; save(); render(); } },
     exportCode: () => { const o = Object.assign({}, st); delete o.me; delete o.theme; delete o.voice; delete o.short; o.epds = (st.epds || []).filter(x => x.share); $('#codeOut').value = encode(o); toast('코드를 만들었어요'); },
     copyCode: async () => { const v = $('#codeOut').value; if (!v) return toast('먼저 코드를 만들어 주세요'); try { await navigator.clipboard.writeText(v); toast('복사했어요'); } catch (e) { $('#codeOut').select(); document.execCommand('copy'); toast('복사했어요'); } },
-    shareCode: async () => { const v = $('#codeOut').value; if (!v) return toast('먼저 코드를 만들어 주세요'); if (navigator.share) { try { await navigator.share({ title: '개굴씨 기록 코드', text: v }); } catch (e) { /* 취소 */ } } else acts.copyCode(); },
+    shareCode: async () => { const v = $('#codeOut').value; if (!v) return toast('먼저 코드를 만들어 주세요'); if (navigator.share) { try { await navigator.share({ title: '해해 기록 코드', text: v }); } catch (e) { /* 취소 */ } } else acts.copyCode(); },
     importCode: () => { try { merge(decode($('#codeIn').value)); toast('기록을 합쳤어요!'); render(); } catch (e) { toast('코드를 읽을 수 없어요: ' + e.message); } },
     saveStart: () => { const v = $('#startIn').value; if (v) { st.startDate = v; save(); toast('시작일을 저장했어요'); } },
     theme: (el) => { st.theme = el.dataset.v; applyTheme(); save(); render(); },
@@ -1107,7 +1106,7 @@
       if (e.type === 'change') { render(); if (k === 'voice' || k === 'rate' || k === 'pitch') acts.voiceTest(); }
       return;
     }
-    if (el.dataset.daily) { const r = dailyRec(ymd(), p); r[el.dataset.daily] = el.checked; r.ts = now(); save(); if (D.DAILY.every(x => r[x.id])) toast('오늘 약속을 전부 지켰어요! 개굴~ 🎉'); return; }
+    if (el.dataset.daily) { const r = dailyRec(ymd(), p); r[el.dataset.daily] = el.checked; r.ts = now(); save(); if (D.DAILY.every(x => r[x.id])) toast('오늘 약속을 전부 지켰어요! 🎉'); return; }
     if (el.dataset.note) { const n = sub.program.day, r = dayRec(n, p); r.notes[el.dataset.note] = el.value; r.ts = now(); save(); return; }
     if (el.dataset.moodk) { const n = sub.program.day, r = dayRec(n, p); r[el.dataset.moodk] = Number(el.value); r.ts = now(); $('#v-' + el.dataset.moodk).textContent = el.value; save(); return; }
     if (el.dataset.llmemo) { const r = st.ll[el.dataset.llmemo]; r.memo = el.value; r.ts = now(); save(); return; }
@@ -1141,8 +1140,8 @@
   }
 
   function onboard() {
-    openSheet(`<div style="text-align:center">${frog('cheer', 110)}<h1>안녕! 나는 개굴씨야</h1>
-      <p class="muted">둘이 같은 편이 되는 30일, 내가 매일 옆에서 도와줄게.</p></div>
+    openSheet(`<div style="text-align:center">${frog('cheer', 110)}<h1>해해</h1>
+      <p class="muted">둘이 같은 편이 되는 30일. 매일 조금씩, 함께 해요.</p></div>
       <div class="grid2"><label class="field"><span>남편 호칭</span><input type="text" id="obH" placeholder="남편" maxlength="12"></label>
       <label class="field"><span>아내 호칭</span><input type="text" id="obW" placeholder="아내" maxlength="12"></label></div>
       <label class="field"><span>30일 과정 시작일</span><input type="date" id="obStart" value="${ymd()}"></label>
