@@ -5,6 +5,7 @@ on:
     branches: ['**']
     paths:
       - 'couple-app/**'
+      - '!couple-app/**/*.md'
       - '.github/workflows/couple-apk.yml'
     tags: ['couple-v*']
   workflow_dispatch:
