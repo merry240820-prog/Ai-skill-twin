@@ -21,6 +21,7 @@
       daily: {},
       ll: { h: null, w: null },
       pledge: { h: null, w: null, custom: [] },
+      rules3: { h: null, w: null },
       money: { rules: { limit: 30, wait: 24, allowH: 20, allowW: 20, goal: '', ts: 0 }, log: [] },
       messages: [],
       timeouts: []
@@ -35,6 +36,7 @@
       return Object.assign(b, s, {
         profiles: { h: Object.assign(b.profiles.h, s.profiles && s.profiles.h), w: Object.assign(b.profiles.w, s.profiles && s.profiles.w) },
         pledge: Object.assign(b.pledge, s.pledge),
+        rules3: Object.assign(b.rules3, s.rules3),
         money: { rules: Object.assign(b.money.rules, s.money && s.money.rules), log: (s.money && s.money.log) || [] },
         ll: Object.assign(b.ll, s.ll)
       });
@@ -146,6 +148,7 @@
     return `
       <div class="speech card soft">${frog(greet[0], 72)}<div class="bubble">${greet[1]}</div></div>
 
+      ${rulesBanner()}
       <div class="card">
         <div class="row"><span class="chip">${D.WEEKS[day.w - 1].n}주차 · ${esc(D.WEEKS[day.w - 1].t)}</span><span class="grow"></span>
           <span class="chip ${isDone(n, 'h') ? 'ok' : ''}"><span class="dot h"></span>${esc(name('h'))}</span>
@@ -177,6 +180,17 @@
         <b>안전이 먼저예요.</b> 다툼 중에 몸을 다치거나, 다칠 것 같은 위협을 느낀다면 이 앱으로 해결하려 하지 말고 바로 도움을 요청하세요.
         <div class="row" style="margin-top:8px">${D.SAFETY.slice(0, 2).map(s => `<a class="btn" href="tel:${s.n}">${s.n}</a>`).join('')}<button class="btn ghost" data-act="safety">더 보기</button></div>
       </div>`;
+  }
+
+  function rulesBanner() {
+    const both = st.rules3.h && st.rules3.w;
+    if (both) {
+      return `<button class="card gold" style="width:100%;text-align:left" data-act="toolGo" data-k="rules"><b>우리 3대 규칙</b> <span class="chip ok">둘 다 합의</span><br>
+        <span class="small">${D.RULES3.map((r, i) => `${i + 1}. ${esc(r.t)}`).join(' · ')}</span></button>`;
+    }
+    return `<div class="card warm"><b>먼저, 우리 3대 규칙에 합의해요</b>
+      <p class="small" style="margin:4px 0 8px">욕설·협박 0회 · 동의 없는 신체접촉 0회 · "멈춤" = 10분 분리. 이 세 가지가 지켜져야 대화 연습이 의미가 있어요.</p>
+      <button class="btn warm block" data-act="toolGo" data-k="rules">3대 규칙 읽고 서명하기</button></div>`;
   }
 
   // ───────────────────────── 30일 과정
@@ -450,6 +464,7 @@
     const item = (k, ico, t, d) => `<button class="card row" style="width:100%;text-align:left" data-act="toolOpen" data-k="${k}"><span style="font-size:26px">${ico}</span><span class="grow"><b>${t}</b><br><span class="tiny">${d}</span></span><span>›</span></button>`;
     if (ts.open) return toolDetail(ts.open);
     return `<h1>도구</h1>
+      ${item('rules', '🛑', '우리 3대 규칙', '욕설·협박 0 · 동의 없는 신체접촉 0 · 멈춤=10분 분리')}
       ${item('pledge', '📜', '하지 않기 서약', '욕·부수기·버리기·탓하기… 우리가 하지 않을 것')}
       ${item('money', '💳', '돈 대화', '비싼 물건 규칙 · 눈치 없이 묻는 법 · 구매 공유 카드')}
       ${item('repair', '🩹', '회복 문장', '싸우는 도중 관계를 살리는 한마디')}
@@ -461,6 +476,16 @@
   }
   function toolDetail(k) {
     const back = `<button class="btn ghost" data-act="toolOpen" data-k="">← 도구</button>`;
+    if (k === 'rules') {
+      return `${back}<h1>우리 3대 규칙</h1>
+        <p class="muted small">상담에서 합의할 최소한의 선이에요. 둘 다 서명해야 효력이 생겨요. 다른 모든 연습은 이 세 가지 위에서만 의미가 있어요.</p>
+        ${D.RULES3.map((r, i) => `<div class="card"><h3>${i + 1}. ${esc(r.t)}</h3><p class="small" style="margin:0">${esc(r.d)}</p></div>`).join('')}
+        <div class="card warm"><h3>규칙이 깨지면</h3><ol class="list small">${D.RULES3_BREACH.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>
+        <div class="card soft"><p class="small">위 규칙과, 깨졌을 때의 약속에 동의합니다. 서명은 "앞으로 지키겠다"는 약속이지, 지난 일을 따지는 문서가 아니에요.</p>
+          <div class="grid2">${P.map(p => st.rules3[p] ? `<div class="chip ok" style="justify-content:center;padding:10px"><span class="dot ${p}"></span>${esc(name(p))} 동의 ${esc(st.rules3[p].date)}</div>` : `<button class="btn primary" data-act="sign3" data-p="${p}">${esc(name(p))} 동의·서명</button>`).join('')}</div>
+          ${st.rules3.h || st.rules3.w ? '<button class="btn ghost block small" data-act="resign3" style="margin-top:8px">서명 갱신 (다시 서명하기)</button>' : ''}</div>
+        <p class="tiny">서명 화면을 캡처해 두거나, 상담사에게 보여 주고 상담 기록에 남겨 달라고 요청할 수 있어요.</p>`;
+    }
     if (k === 'pledge') {
       return `${back}<h1>하지 않기 서약</h1>
         <div class="card">${D.DONTS.map(x => `<div class="dont"><div class="x">✕ ${esc(x.t)}</div><div class="o">→ 대신: ${esc(x.alt)}</div></div>`).join('')}
@@ -552,14 +577,14 @@
   const to = { left: 0, iv: null, biv: null };
   function openTimeout() {
     st.timeouts.push({ id: uid(), by: me(), at: now() }); save();
-    to.left = 20 * 60;
+    to.left = 10 * 60;
     openSheet(`
       <div style="text-align:center">${frog('calm', 96)}<h1 style="margin-top:4px">개굴 타임</h1>
-        <p class="muted small">지금은 대화를 멈추고, 서로 다른 공간에서 몸을 진정시키는 시간이에요.<br>20분 뒤에 꼭 다시 만나요.</p>
+        <p class="muted small">지금은 대화를 멈추고, 서로 다른 공간에서 몸을 진정시키는 시간이에요.<br>최소 10분, 따라가지 않고 각자 다른 공간에서. "멈춤"을 말한 사람이 돌아올 시간을 말해요.</p>
         <div class="breath" id="breath"><span class="breath-label" id="breathLabel">들이쉬고</span></div>
-        <div class="timer" id="toTime">20:00</div></div>
+        <div class="timer" id="toTime">10:00</div><button class="btn ghost small" data-act="toMore">+10분 더</button></div>
       <div class="card small"><b>지금 하면 좋은 것</b><ul class="list"><li>방을 옮기기 · 창문 열기 · 찬물 세수</li><li>호흡: 4초 들이쉬고 6초 내쉬기 (위 원을 따라)</li><li>상대 탓 생각이 올라오면 "지금은 몸부터"라고 속으로 말하기</li></ul>
-        <b>하지 않기</b><ul class="list"><li>따라가서 말 걸기 · 문 쾅 닫기 · 물건 만지기</li><li>메시지로 싸움 이어가기</li></ul></div>
+        <b>하지 않기</b><ul class="list"><li>따라가서 말 걸기 · 문 앞에서 설명하기 · 마지막 한마디</li><li>문 쾅 닫기 · 물건 만지기 · 상대 몸 붙잡기</li><li>메시지로 싸움 이어가기</li></ul></div>
       <div class="card soft small"><b>돌아와서 첫마디</b><br>"아까 멈춰 줘서 고마워. 내가 ___한 건 내 몫이야. 다시 천천히 이야기해 볼까?"</div>
       <p class="tiny" style="text-align:center">위협을 느낀다면 <a href="tel:112">112</a> · <a href="tel:1366">1366</a></p>
       <button class="btn primary block" data-act="closeSheet">진정됐어요, 돌아가기</button>`, () => { clearInterval(to.iv); clearInterval(to.biv); });
@@ -595,6 +620,7 @@
       st.profiles[p] = newer(st.profiles[p], r.profiles && r.profiles[p]);
       st.ll[p] = newer(st.ll[p], r.ll && r.ll[p]);
       st.pledge[p] = newer(st.pledge[p], r.pledge && r.pledge[p]);
+      st.rules3[p] = newer(st.rules3[p], r.rules3 && r.rules3[p]);
     });
     if (!st.startDate || (r.startDate && r.startDate < st.startDate)) st.startDate = r.startDate || st.startDate;
     Object.keys(r.days || {}).forEach(n => { st.days[n] = st.days[n] || {}; P.forEach(p => { const v = newer(st.days[n][p], r.days[n][p]); if (v) st.days[n][p] = v; }); });
@@ -609,6 +635,7 @@
   // ───────────────────────── 이벤트
   const acts = {
     closeSheet,
+    toMore: () => { to.left += 600; const el = $('#toTime'); if (el) el.textContent = fmtTime(to.left); },
     openDay: (el) => { sub.program = { day: Number(el.dataset.n) }; go('program'); },
     backProgram: () => { sub.program = {}; go('program'); },
     sessToggle: (el) => { const n = Number(el.dataset.n); if (session.day === n && session.running) pauseSession(); else startSession(n); },
@@ -644,6 +671,9 @@
     llBack: (el) => { const r = st.ll[el.dataset.p]; const i = r.answers.findIndex(a => a == null); const j = (i < 0 ? r.answers.length : i) - 1; if (j >= 0) r.answers[j] = null; r.ts = now(); save(); render(); },
     llReset: (el) => { if (!confirm('사랑의 언어 테스트를 다시 할까요?')) return; st.ll[el.dataset.p] = { answers: Array(D.LOVE_Q.length).fill(null), done: false, memo: (st.ll[el.dataset.p] || {}).memo || '', ts: now() }; save(); render(); },
     toolOpen: (el) => { sub.tools.open = el.dataset.k || null; render(); window.scrollTo(0, 0); },
+    toolGo: (el) => { sub.tools = { open: el.dataset.k }; go('tools'); },
+    sign3: (el) => { st.rules3[el.dataset.p] = { date: ymd(), ts: now() }; save(); render(); toast(st.rules3.h && st.rules3.w ? '둘 다 합의했어요. 오늘부터 시작이에요.' : '서명했어요'); },
+    resign3: () => { if (!confirm('두 사람 서명을 모두 지우고 다시 서명할까요?')) return; P.forEach(p => { st.rules3[p] = null; }); save(); render(); },
     sign: (el) => { st.pledge[el.dataset.p] = { date: ymd(), ts: now() }; save(); render(); toast('서명 완료! 개굴씨가 증인이야 🐸'); },
     resign: () => { P.forEach(p => { st.pledge[p] = null; }); save(); render(); },
     addCustom: () => { const i = $('#customIn'); const t = i.value.trim(); if (!t) return; st.pledge.custom.push(t); save(); render(); },
