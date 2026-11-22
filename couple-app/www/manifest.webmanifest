@@ -1,0 +1,10 @@
+{
+  "name": "개굴씨 부부연구소",
+  "short_name": "개굴씨",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F3F7F1",
+  "theme_color": "#2F7A4F",
+  "lang": "ko",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -1,0 +1,6 @@
+{
+  "appId": "com.gaegul.couple",
+  "appName": "개굴씨 부부연구소",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}

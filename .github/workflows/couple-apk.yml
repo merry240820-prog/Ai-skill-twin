@@ -1,0 +1,90 @@
+name: 개굴씨 APK 빌드
+
+on:
+  push:
+    paths:
+      - 'couple-app/**'
+      - '.github/workflows/couple-apk.yml'
+    tags: ['couple-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: couple-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: couple-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: 의존성 설치
+        run: npm ci
+
+      - name: 안드로이드 프로젝트 생성 + 아이콘
+        run: |
+          npx cap add android
+          npx @capacitor/assets generate --android --assetPath assets
+          npx cap sync android
+
+      - name: 서명 키 준비 (시크릿이 있으면 release, 없으면 debug)
+        id: keys
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "mode=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=debug" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: APK 빌드 (debug)
+        if: steps.keys.outputs.mode == 'debug'
+        working-directory: couple-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/gaegul-couple.apk"
+
+      - name: APK 빌드 (release, 고정 키로 서명)
+        if: steps.keys.outputs.mode == 'release'
+        working-directory: couple-app/android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/zipalign" -f -p 4 app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass env:KS_PASS \
+            --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
+            --out "$GITHUB_WORKSPACE/gaegul-couple.apk" aligned.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gaegul-couple-apk
+          path: gaegul-couple.apk
+
+      - name: 태그면 GitHub Release에 첨부
+        if: startsWith(github.ref, 'refs/tags/couple-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: gaegul-couple.apk
