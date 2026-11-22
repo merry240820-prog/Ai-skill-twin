@@ -1,4 +1,4 @@
-// Datum 스케치 — 평면 위 2D 그리기 → 돌출 추가 / 잘라내기 / 새 바디
+// 혁신3D 스케치 — 평면 위 2D 그리기 → 돌출 추가 / 잘라내기 / 새 바디
 // 좌표: 스케치 평면 mm(y 위쪽). 화면 = pan + (x·zoom, −y·zoom)
 
 const KEY_TOOLS = { l: 'line', r: 'rect', c: 'circle', a: 'arc', s: 'select' };

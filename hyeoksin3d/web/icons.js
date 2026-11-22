@@ -1,4 +1,4 @@
-// Datum 아이콘 세트 — 24×24, 선 두께 1.6, currentColor. 모두 직접 그린 원본 아이콘.
+// 혁신3D 아이콘 세트 — 24×24, 선 두께 1.6, currentColor. 모두 직접 그린 원본 아이콘.
 const P = {
   logo: '<path d="M4 18 12 4l8 14H4Z"/><path d="M8.5 18 12 11.5 15.5 18"/>',
   new: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M12 11v6M9 14h6"/>',

@@ -1,8 +1,8 @@
-name: Datum Windows build
+name: Hyeoksin3D Windows build
 
 on:
   push:
-    paths: ["datum/**", ".github/workflows/datum-windows.yml"]
+    paths: ["hyeoksin3d/**", ".github/workflows/hyeoksin3d-windows.yml"]
   workflow_dispatch:
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 60
     defaults:
       run:
-        working-directory: datum
+        working-directory: hyeoksin3d
     steps:
       - uses: actions/checkout@v4
 
@@ -20,8 +20,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            datum/requirements.txt
-            datum/requirements-windows.txt
+            hyeoksin3d/requirements.txt
+            hyeoksin3d/requirements-windows.txt
 
       - name: Install dependencies
         run: |
@@ -31,43 +31,51 @@ jobs:
       - name: Engine tests
         run: python -m pytest -q tests
 
-      - name: Build Datum.exe (PyInstaller)
-        run: pyinstaller --noconfirm --clean packaging/datum.spec
+      - name: Build Hyeoksin3D.exe (PyInstaller)
+        run: pyinstaller --noconfirm --clean packaging/hyeoksin3d.spec
 
       - name: Self-test the built exe
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath "dist/Datum/Datum.exe" -ArgumentList "--selftest", "$PWD\selftest.txt" -Wait -PassThru
+          $p = Start-Process -FilePath "dist/Hyeoksin3D/Hyeoksin3D.exe" -ArgumentList "--selftest", "$PWD\selftest.txt" -Wait -PassThru
           Get-Content selftest.txt
           if ($p.ExitCode -ne 0) { throw "self-test failed ($($p.ExitCode))" }
+
+      - name: GUI test (real WebView2 window)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist/Hyeoksin3D/Hyeoksin3D.exe" -ArgumentList "--guitest", "$PWD\guitest.txt" -PassThru
+          if (-not $p.WaitForExit(420000)) { $p.Kill(); throw "GUI test timed out" }
+          Get-Content guitest.txt
+          if ($p.ExitCode -ne 0) { throw "GUI test failed ($($p.ExitCode))" }
 
       - name: Build installer (Inno Setup)
         shell: pwsh
         run: |
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; }
-          & $iscc packaging/datum.iss
+          & $iscc packaging/hyeoksin3d.iss
           Get-ChildItem packaging/Output
 
       - name: Portable zip
         shell: pwsh
-        run: Compress-Archive -Path dist/Datum -DestinationPath dist/Datum-portable.zip
+        run: Compress-Archive -Path dist/Hyeoksin3D -DestinationPath dist/Hyeoksin3D-portable.zip
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Datum-Setup-Windows11
-          path: datum/packaging/Output/*.exe
+          name: Hyeoksin3D-Setup-Windows11
+          path: hyeoksin3d/packaging/Output/*.exe
           retention-days: 30
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Datum-portable
-          path: datum/dist/Datum-portable.zip
+          name: Hyeoksin3D-portable
+          path: hyeoksin3d/dist/Hyeoksin3D-portable.zip
           retention-days: 30
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: selftest-log
-          path: datum/selftest.txt
+          path: hyeoksin3d/selftest.txt
           if-no-files-found: ignore

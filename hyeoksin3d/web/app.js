@@ -7,8 +7,8 @@ import { createSketch } from '/static/sketch.js';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const store = {
-  get(k, d) { try { const v = localStorage.getItem('datum.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('datum.' + k, JSON.stringify(v)); } catch { /* 저장 불가 환경 */ } },
+  get(k, d) { try { const v = localStorage.getItem('hyeoksin3d.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('hyeoksin3d.' + k, JSON.stringify(v)); } catch { /* 저장 불가 환경 */ } },
 };
 
 // =============================================================== 서버 통신 · 알림
@@ -231,7 +231,7 @@ function updateGrid() {
 let selectedBody = null;
 function renderBrowser() {
   $('#docname').textContent = state.name;
-  document.title = `${state.name} — Datum`;
+  document.title = `${state.name} — 혁신3D`;
   $('#body-count').textContent = state.bodies.length ? `${state.bodies.length}` : '';
   $('#empty-hint').hidden = state.bodies.length > 0;
   const ul = $('#bodies');
@@ -242,9 +242,11 @@ function renderBrowser() {
     li.innerHTML = `<input type="color" class="sw" value="${b.color}" title="색상"><span class="nm" title="더블클릭해서 이름 바꾸기"></span>${b.fixed ? `<span class="tag" title="고정 부품 — 메이트로 움직이지 않음">${icon('pin', 12)}고정</span>` : ''}<button class="vis icon-btn small" title="보이기/숨기기">${icon(b.visible ? 'eye' : 'eyeOff', 16)}</button>`;
     $('.nm', li).textContent = b.name;
     li.onclick = (e) => {
-      if (e.target.closest('.vis,.sw')) return;
+      if (e.target.closest('.vis,.sw') || e.target.tagName === 'INPUT') return;
+      if (selectedBody === b.id) return;
       selectedBody = b.id;
-      renderBrowser();
+      // 목록을 다시 만들지 않고 표시만 바꾼다(다시 만들면 더블클릭 이름 바꾸기가 끊긴다)
+      $$('#bodies li').forEach((x) => x.classList.toggle('sel', x === li));
       activeTool?.refresh?.();
     };
     $('.nm', li).ondblclick = () => {

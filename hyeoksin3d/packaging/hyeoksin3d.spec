@@ -1,5 +1,5 @@
-# PyInstaller 빌드 설정 — Windows 11용 Datum.exe (폴더형 배포)
-# 사용: (datum 폴더에서) pyinstaller --noconfirm packaging/datum.spec
+# PyInstaller 빌드 설정 — Windows 11용 Hyeoksin3D.exe (폴더형 배포)
+# 사용: (hyeoksin3d 폴더에서) pyinstaller --noconfirm packaging/hyeoksin3d.spec
 import glob
 import os
 import sys
@@ -45,10 +45,10 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, [],
     exclude_binaries=True,
-    name="Datum",
-    icon=os.path.join(SPECPATH, "datum.ico"),
+    name="Hyeoksin3D",
+    icon=os.path.join(SPECPATH, "hyeoksin3d.ico"),
     console=False,
     version=os.path.join(SPECPATH, "version.txt"),
     upx=False,
 )
-coll = COLLECT(exe, a.binaries, a.datas, name="Datum", upx=False)
+coll = COLLECT(exe, a.binaries, a.datas, name="Hyeoksin3D", upx=False)

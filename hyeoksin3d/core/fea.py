@@ -172,7 +172,7 @@ def _order_tets(xyz, tets):
 
 
 def _match_faces(shape, surfaces):
-    """Datum 면 번호 → gmsh 면 태그 (면 중심·면적으로 대응)."""
+    """혁신3D 면 번호 → gmsh 면 태그 (면 중심·면적으로 대응)."""
     n = g.sub_map(shape, "face").Extent()
     mapping = {}
     used = set()

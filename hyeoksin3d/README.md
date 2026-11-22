@@ -1,9 +1,8 @@
-# Datum — STEP 직접 편집 3D CAD
+# 혁신3D — 개인용 3D CAD (Windows 11)
 
-> **Datum(데이텀)**: 설계에서 모든 치수의 출발점이 되는 기준면·기준축을 뜻하는 말.
-> 남이 만든 STEP 파일도 내 기준으로 다시 잡아 고친다는 뜻으로 지었다.
+> 영문·파일 이름: **Hyeoksin3D**
 
-![Datum 화면](docs/screenshot.png)
+![혁신3D 화면](docs/screenshot.png)
 
 솔리드웍스·퓨전 360·온쉐이프·스페이스클레임을 벤치마킹한 개인용 CAD다. STEP(.step/.stp)을 열어
 **치수를 재고, 그 자리에서 치수를 바꾸고, 다시 STEP으로 저장**하는 데 집중했다. 형상은 솔리드웍스와
@@ -12,24 +11,24 @@
 
 ## 설치 (Windows 11)
 
-Datum은 **Windows 11 전용 데스크톱 프로그램**으로 배포한다. 브라우저 없이 자체 창(Windows 11에 기본 포함된 Edge WebView2)으로
+혁신3D는 **Windows 11 전용 데스크톱 프로그램**으로 배포한다. 브라우저 없이 자체 창(Windows 11에 기본 포함된 Edge WebView2)으로
 열리고, 모든 계산은 내 PC 안에서만 한다(인터넷 연결 불필요, 내부 주소 127.0.0.1만 사용).
 
-1. GitHub 저장소 → **Actions** → **Datum Windows build** → 가장 최근 성공한 실행 → 아래 **Artifacts**에서
-   `Datum-Setup-Windows11`을 내려받아 압축을 푼다.
-2. `Datum-Setup-0.5.0.exe` 실행 → 설치(관리자 권한 불필요, 내 계정에만 설치).
+1. GitHub 저장소 → **Actions** → **Hyeoksin3D Windows build** → 가장 최근 성공한 실행 → 아래 **Artifacts**에서
+   `Hyeoksin3D-Setup-Windows11`을 내려받아 압축을 푼다.
+2. `Hyeoksin3D-Setup-0.6.0.exe` 실행 → 설치(관리자 권한 불필요, 내 계정에만 설치).
    - 처음 실행할 때 Windows SmartScreen이 "알 수 없는 게시자"라고 막으면 **추가 정보 → 실행**을 누른다(개인용이라 코드 서명을 하지 않았다).
-   - 설치 중 "STEP 파일을 Datum으로 열기"를 고르면 탐색기에서 .step 파일을 더블클릭해 바로 열 수 있다.
-3. 시작 메뉴 또는 바탕 화면의 **Datum**으로 실행.
+   - 설치 중 "STEP 파일을 혁신3D로 열기"를 고르면 탐색기에서 .step 파일을 더블클릭해 바로 열 수 있다.
+3. 시작 메뉴 또는 바탕 화면의 **혁신3D**으로 실행.
 
-설치 없이 쓰려면 `Datum-portable` 압축을 풀고 `Datum\Datum.exe`를 실행한다.
+설치 없이 쓰려면 `Hyeoksin3D-portable` 압축을 풀고 `Hyeoksin3D\Hyeoksin3D.exe`를 실행한다.
 직접 빌드하려면 `build_windows.bat`(Python 3.12 필요)을 실행한다. 개발 중에는 `run_windows.bat`(브라우저로 실행)도 쓸 수 있다.
 
-문제가 생기면 `%LOCALAPPDATA%\Datum\datum.log`를 확인하고, `Datum.exe --selftest 결과.txt`로 엔진 점검을 할 수 있다.
+문제가 생기면 `%LOCALAPPDATA%\Hyeoksin3D\hyeoksin3d.log`를 확인하고, `Hyeoksin3D.exe --selftest 결과.txt`(엔진)와 `Hyeoksin3D.exe --guitest 결과.txt`(실제 창)로 점검할 수 있다.
 
 ## 벤치마킹해서 가져온 것
 
-| 출처 | 가져온 아이디어 | Datum에서 |
+| 출처 | 가져온 아이디어 | 혁신3D에서 |
 |---|---|---|
 | 스페이스클레임 | 이력 없이 면을 직접 당기고 옮기는 편집 | **면 이동**, **거리 지정**, **지름 변경** — 이웃 면이 자동으로 따라온다 |
 | 솔리드웍스 | 측정 도구, 상황별 툴바, 명령 검색, 마우스 조작 | 클릭 즉시 치수 표시, 선택 옆 미니 툴바, `S` 명령 검색, 가운데 버튼 회전 |
@@ -92,7 +91,7 @@ Datum은 **Windows 11 전용 데스크톱 프로그램**으로 배포한다. 브
 
 2차 사면체(10절점) 요소를 쓴다. 외팔보(100×10×10 mm, 강철, 끝단 100 N)로 검증한 결과:
 
-| 항목 | 이론값 | Datum |
+| 항목 | 이론값 | 혁신3D |
 |---|---|---|
 | 끝단 처짐 | 0.1905 mm | 0.1908 mm |
 | 최대 굽힘응력 | 60 MPa | 60.6 MPa |
@@ -103,7 +102,7 @@ Datum은 **Windows 11 전용 데스크톱 프로그램**으로 배포한다. 브
 ## 구조
 
 ```
-datum/
+hyeoksin3d/
 ├── desktop.py         Windows 앱 진입점(WebView2 창, 저장 창, 자체 점검)
 ├── server.py          로컬 서버(FastAPI): 화면 ↔ 엔진, 메시 캐시, 앱 창 실행
 ├── core/

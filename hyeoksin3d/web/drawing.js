@@ -1,4 +1,4 @@
-// Datum 도면 편집기 — 투상도 + 치수 + 표제란 → PDF / DXF / SVG
+// 혁신3D 도면 편집기 — 투상도 + 치수 + 표제란 → PDF / DXF / SVG
 // 좌표: 용지 mm, y 아래쪽(SVG와 같음). 뷰 엔티티는 모델 mm(y 위쪽)이며 (ox + x·s, oy − y·s)로 용지에 놓인다.
 
 const TEXT_H = 3.5; // 치수 문자 높이(mm)
@@ -28,7 +28,7 @@ export function createDrawing(ctx) {
   let drag = null;
   let opts = { sheet: 'A3', scale: null, views: ['front', 'top', 'right', 'iso'], hidden: true };
   let uid = 1;
-  let placing = null, sectionHover = null, detailDraft = null, selView = null;
+  let placing = null, sectionHover = null, detailDraft = null, selView = null, lastDown = null;
   let aopt = { secOrient: 'h', secFlip: false, factor: 2, gdt: 'position', tol: '0.05', dia: true, mod: '', datums: ['A', 'B', ''], datum: 'A', ra: 'Ra 1.6', machined: true };
 
   // ------------------------------------------------------------ 좌표 변환
@@ -103,7 +103,7 @@ export function createDrawing(ctx) {
     out.push({ t: 'poly', p: [sx, sy - 3, sx + 9, sy - 5, sx + 9, sy + 5, sx, sy + 3, sx, sy - 3], s: 'thin' });
     out.push({ t: 'circle', c: [sx + 20, sy], r: 5, s: 'thin' }, { t: 'circle', c: [sx + 20, sy], r: 3, s: 'thin' });
     value(c3 + 3, y + 8, T.company, 3);
-    out.push({ t: 'text', x: x + w - 2, y: y + h + 4.5, str: 'Datum', h: 2.2, a: 'end', s: 'thin' });
+    out.push({ t: 'text', x: x + w - 2, y: y + h + 4.5, str: '혁신3D', h: 2.2, a: 'end', s: 'thin' });
   }
 
   function arrow(tip, dir) { // dir: 화살표가 가리키는 방향(단위벡터)
@@ -555,6 +555,14 @@ export function createDrawing(ctx) {
     if (placing) { placing = null; setTool('select'); render(); return; }
     if (tool === 'select') {
       const g = e.target.closest('.dimg');
+      // 더블클릭은 직접 판별한다(누를 때마다 다시 그리므로 브라우저 dblclick이 오지 않는다)
+      const now = performance.now();
+      if (g && lastDown && lastDown.id === g.dataset.id && now - lastDown.t < 450 && Math.hypot(e.clientX - lastDown.x, e.clientY - lastDown.y) < 6) {
+        lastDown = null;
+        onDbl({ target: g });
+        return;
+      }
+      lastDown = g ? { id: g.dataset.id, t: now, x: e.clientX, y: e.clientY } : null;
       sel = g ? g.dataset.id : null;
       selView = null;
       if (sel) {
@@ -783,7 +791,6 @@ export function createDrawing(ctx) {
     svg.addEventListener('pointerdown', onDown);
     window.addEventListener('pointerup', () => { drag = null; });
     svg.addEventListener('wheel', onWheel, { passive: false });
-    svg.addEventListener('dblclick', onDbl);
     svg.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', onKey, true);
     new ResizeObserver(() => { if (D && !host.hidden) render(); }).observe(svg);
@@ -882,5 +889,6 @@ export function createDrawing(ctx) {
     onClose?.();
   }
   window.__dr = () => D;
+  window.__drPrims = () => prims();
   return { open, close, isOpen: () => host && !host.hidden, reset: () => { D = null; }, _state: () => D, _prims: () => prims() };
 }

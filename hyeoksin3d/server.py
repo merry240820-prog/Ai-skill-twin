@@ -1,4 +1,4 @@
-"""Datum 로컬 서버.
+"""혁신3D 로컬 서버.
 
 `python server.py` 를 실행하면 브라우저(가능하면 앱 창 모드)로 http://127.0.0.1:8765 가 열린다.
 서버는 127.0.0.1 에만 열리므로 같은 PC 밖에서는 접속할 수 없다.
@@ -27,8 +27,8 @@ from core import assembly, drawing, fea, sketch  # noqa: E402
 from core.geometry import make_compound  # noqa: E402
 from core.document import Document  # noqa: E402
 
-APP_NAME = "Datum"
-VERSION = "0.5.0"
+APP_NAME = "혁신3D"
+VERSION = "0.6.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI(title=APP_NAME, version=VERSION)
 doc = Document()
@@ -507,7 +507,7 @@ def _open_window(url: str):
 
 def main():
     import uvicorn
-    port = int(os.environ.get("DATUM_PORT", "8765"))
+    port = int(os.environ.get("HYEOKSIN3D_PORT", "8765"))
     url = f"http://127.0.0.1:{port}"
     print(f"{APP_NAME} {VERSION} — {url}  (종료: Ctrl+C)")
     if "--no-browser" not in sys.argv:

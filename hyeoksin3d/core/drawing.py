@@ -346,8 +346,8 @@ def export_pdf(doc: dict, path: str):
         except Exception:
             pass
     c = canvas.Canvas(path, pagesize=(W * mm, H * mm))
-    c.setTitle(doc.get("title", "Datum drawing"))
-    c.setCreator("Datum")
+    c.setTitle(doc.get("title", "혁신3D drawing"))
+    c.setCreator("혁신3D")
     Y = lambda y: (H - y) * mm  # noqa: E731
     for p in doc["prims"]:
         st = p.get("s", "thin")
