@@ -45,6 +45,12 @@ jobs:
           npx @capacitor/assets generate --android --assetPath assets
           npx cap sync android
 
+      - name: 버전 번호 올리기 (빌드마다 versionCode 증가)
+        run: |
+          VN=$(node -p "require('./package.json').version")
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"$VN\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+
       - name: 서명 키 준비 (시크릿이 있으면 release, 없으면 debug)
         id: keys
         env:
@@ -94,7 +100,12 @@ jobs:
           name: 개굴씨 부부연구소 APK
           body: |
             📱 폰에서 아래 **gaegul-couple.apk**를 눌러 받은 뒤 설치하세요.
-            (처음 한 번: 설정 → "출처를 알 수 없는 앱 설치" 허용)
+
+            **설치가 안 되면**
+            1. 이전에 설치한 개굴씨 앱이 있으면 먼저 **삭제** (서명이 달라 덮어쓰기가 안 됨). 삭제 전 도구 → 동기화에서 기록 코드 백업
+            2. 갤럭시: 설정 → 보안 및 개인정보 보호 → **자동 차단** 끄기
+            3. 처음 한 번: "출처를 알 수 없는 앱 설치" 허용 (내 파일 또는 사용한 브라우저)
+            4. Play 프로텍트 경고 → 세부정보 → 무시하고 설치
 
             빌드 커밋: ${{ github.sha }}
           files: gaegul-couple.apk

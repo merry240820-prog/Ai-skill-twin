@@ -902,7 +902,7 @@
           <button class="btn block" data-act="saveStart">시작일 저장</button></div>
         <div class="card"><h3>화면 테마</h3><div class="seg">${[['auto', '자동'], ['light', '밝게'], ['dark', '어둡게']].map(([v, t]) => `<button class="${st.theme === v ? 'on' : ''}" data-act="theme" data-v="${v}">${t}</button>`).join('')}</div></div>
         <div class="card danger"><h3>모든 기록 지우기</h3><p class="small">이 폰의 모든 기록이 사라져요. 먼저 동기화 · 백업에서 코드를 만들어 두세요.</p><button class="btn block" data-act="reset">초기화</button></div>
-        <p class="tiny">개굴씨 부부연구소 v2.1 · 이 앱은 전문 상담을 대신하지 않아요. 어려움이 계속되면 부부상담 전문가와 함께하세요.</p>`;
+        <p class="tiny">개굴씨 부부연구소 v2.1.1 · 이 앱은 전문 상담을 대신하지 않아요. 어려움이 계속되면 부부상담 전문가와 함께하세요.</p>`;
     }
     return back;
   }
